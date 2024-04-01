@@ -7,88 +7,126 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model estadojuego {
-  id          Int     @id @default(autoincrement())
-  estado      String? @db.VarChar(20)
-  descripcion String? @db.VarChar(255)
+enum EstadoJuego {
+  nuevo
+  invitacion
+  listoparaempezar
+  iniciado
+  finalizado
 }
 
-model grupo {
-  id            Int             @id @default(autoincrement())
-  nombre        String          @db.VarChar(200)
-  created_at    DateTime        @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime        @default(now()) @db.Timestamptz(6)
-  juego_grupo   juego_grupo[]
-  jugador_grupo jugador_grupo[]
+enum Moneda {
+  BS
+  US
 }
 
-model juego {
-  id                   Int           @id @default(autoincrement())
-  id_estadojuego       Int
-  fecha_inicializacion DateTime      @db.Timestamp(6)
-  created_at           DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime      @default(now()) @db.Timestamptz(6)
-  juego_grupo          juego_grupo[]
+model Juegos{
+  id Int @id @default(autoincrement())
+
+  estado_juego EstadoJuego @default(nuevo)
+  moneda Moneda @default(BS)
+
+  nombre String
+  fecha_inicio DateTime @db.Date
+  monto_total Int
+
+  jugadores_juegos Jugadores_Juegos[]
+  invitados_juegos Invitados_Juegos[]
+  turnos Turnos[]
 }
 
-model juego_grupo {
-  id         Int      @id @default(autoincrement())
-  id_juego   Int
-  id_grupo   Int
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @default(now()) @db.Timestamptz(6)
-  grupo      grupo    @relation(fields: [id_grupo], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_grupo")
-  juego      juego    @relation(fields: [id_juego], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_juego")
-  oferta     oferta[]
+enum EstadoInvitacion {
+  Enviado
+  Aceptado
+  Rechazado
+  Cancelado
 }
 
-model jugador {
-  id              Int               @id @default(autoincrement())
-  nombre          String            @db.VarChar(200)
-  email           String            @unique @db.VarChar(100)
-  usuario         String            @unique @db.VarChar(20)
-  password        String            @default("") @db.VarChar(20)
-  fechaNac        DateTime          @default(now()) @db.Timestamptz(6)
-  telefono        String            @default("") @db.VarChar(20)
-  created_at      DateTime          @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime          @default(now()) @db.Timestamptz(6)
-  jugador_grupo   jugador_grupo[]
-  jugador_sancion jugador_sancion[]
+model Invitados{
+  id Int @id @default(autoincrement())
+  nombre String
+  correo String @unique
+  telf String @unique
+  invitados_juegos Invitados_Juegos[]
 }
 
-model jugador_grupo {
-  id         Int      @id @default(autoincrement())
+model Invitados_Juegos {
+
+  id_invitado Int
+  id_juego Int
+
+  invitado Invitados @relation(fields: [id_invitado], references: [id], onDelete: Cascade)
+  juego Juegos @relation(fields: [id_juego], references: [id], onDelete: Cascade)
+
+  @@id(name: "id", fields: [id_invitado, id_juego])
+
+  estado_invitacion EstadoInvitacion
+
+  fecha DateTime? @default(now())
+}
+
+enum Periodos {
+  Semanal
+  Quincenal
+  Mensual
+  Personalizado
+}
+
+model Turnos {
+  id Int @id @default(autoincrement())
+  
+  juego Juegos @relation(fields: [id_juego], references: [id], onDelete: Cascade)
+  id_juego Int
+
+  fecha_turno DateTime? @default(now())
+
+  jugador_grupo_turno Jugador_Grupo_Turno[]
+}
+
+model Jugadores {
+  id Int @id @default(autoincrement())
+
+  jugadores_juegos Jugadores_Juegos[]
+
+  nombre String @unique
+  correo String @unique
+  telf String @unique
+}
+
+enum Roles {
+  Creador
+  Jugador
+}
+
+enum Estado_Jugadores_Juego {
+  Participando
+  RetiroForzoso
+  RetiroVoluntario
+}
+
+model Jugadores_Juegos {
+  id Int @id @default(autoincrement())
+
+  jugador Jugadores @relation(fields: [id_jugador], references: [id], onDelete: Cascade)
+  juego Juegos @relation(fields: [id_juego], references: [id], onDelete: Cascade)
+  jugador_grupo_turno Jugador_Grupo_Turno[]
+  rol Roles @default(Jugador)
+  estado Estado_Jugadores_Juego @default(Participando)
+
   id_jugador Int
-  id_grupo   Int
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @default(now()) @db.Timestamptz(6)
-  grupo      grupo    @relation(fields: [id_grupo], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_grupo")
-  jugador    jugador  @relation(fields: [id_jugador], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_jugador")
+  id_juego Int
+
+  fecha_ingreso DateTime? @default(now())
 }
 
-model jugador_sancion {
-  id            Int      @id @default(autoincrement())
-  fecha_sancion DateTime @default(now()) @db.Timestamp(6)
-  id_jugador    Int
-  id_sancion    Int
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime @default(now()) @db.Timestamptz(6)
-  jugador       jugador  @relation(fields: [id_jugador], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_jugador")
-  sancion       sancion  @relation(fields: [id_sancion], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sancion")
-}
+model Jugador_Grupo_Turno {
 
-model oferta {
-  id             Int         @id @default(autoincrement())
-  monto          Int
-  id_juego_grupo Int
-  created_at     DateTime    @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime    @default(now()) @db.Timestamptz(6)
-  juego_grupo    juego_grupo @relation(fields: [id_juego_grupo], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_juego_grupo")
-}
 
-model sancion {
-  id              Int               @id @default(autoincrement())
-  nombre          String            @db.VarChar(30)
-  detalle         String?           @db.VarChar(255)
-  jugador_sancion jugador_sancion[]
+  jugadores_juegos Jugadores_Juegos @relation(fields: [id_jugador_juego], references: [id], onDelete: Cascade)
+  turno Turnos @relation(fields: [id_turno], references: [id], onDelete: Cascade)
+
+  id_jugador_juego Int
+  id_turno Int
+
+  @@id(name: "id", [id_jugador_juego, id_turno])
 }
