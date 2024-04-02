@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
+import { Prisma } from "@prisma/client";
 import {
   actualizarJuego,
   crearJuego,
   obtenerJuegos,
   obtenerJuegosDeJugador,
 } from "../services/juego.service";
-import { Prisma } from "@prisma/client";
-import { parse } from "path";
 
 export const crear = async (req: Request, res: Response) => {
   try {
@@ -20,7 +19,6 @@ export const crear = async (req: Request, res: Response) => {
       data: juego,
     });
   } catch (error: any) {
-    console.log(error);
     return res.status(402).json({
       message: "Error en juego.controller.crear",
       error: error.message,

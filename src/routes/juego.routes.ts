@@ -31,7 +31,7 @@ class JuegoRoutes {
   initializeRoutes() {
     this.router.get("/juegos", obtenerJuegosDeTodosLosJugadores);
     this.router.get(
-      "/juegos/jugadores/:id",
+      "/jugadores/juegos/:id",
       validarIdParam,
       validarNoExisteIdJugador,
       validateResult,
@@ -39,7 +39,7 @@ class JuegoRoutes {
     );
 
     this.router.post(
-      "/juegos/jugadores/:id",
+      "/jugadores/:id/juegos",
       validarFecha_InicioBody,
       validarNombreBody,
       validarMontoTotalBody,
@@ -50,7 +50,7 @@ class JuegoRoutes {
     );
 
     this.router.put(
-      "/juegos/jugadores/:id",
+      "/jugadores/:id/juegos",
       validarIdParam,
       validarNoExisteIdJugador,
       validarExisteNombreOpcional,
@@ -62,7 +62,7 @@ class JuegoRoutes {
     );
 
     this.router.delete(
-      "/juegos/jugadores/:id",
+      "/jugadores/:id/juegos",
       validarIdParam,
       validarNoExisteIdJugador,
       // TODO Validar que el ID de juego corresponda al jugador que pretende eliminar

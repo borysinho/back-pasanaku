@@ -15,7 +15,8 @@ import {
 import {
   actualizar,
   eliminar,
-  crear,
+  crearSinInvitacion,
+  crearConInvitacion,
   mostrarTodos,
   mostrarUno,
 } from "../controllers/jugador.controllers";
@@ -39,14 +40,17 @@ class JugadorRoutes {
 
     this.router.post(
       "/jugadores",
-      validarNombreBody,
-      validarCorreoBody,
-      validarTelfBody,
-      validarNoExisteEmailJugador,
-      validarNoExisteTelfJugador,
-      validateResult,
-      crear
+      //TODO corregir las validaciones de crear jugador
+      // validarNombreBody,
+      // validarCorreoBody,
+      // validarTelfBody,
+      // validarNoExisteEmailJugador,
+      // validarNoExisteTelfJugador,
+      // validateResult,
+      crearConInvitacion
     );
+
+    this.router.post("/jugadores/norelacionar", crearSinInvitacion);
 
     this.router.put(
       "/jugadores/:id",

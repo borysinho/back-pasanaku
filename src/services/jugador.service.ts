@@ -3,16 +3,44 @@ import prisma from "./prisma.service";
 
 // const prisma = new PrismaClient();
 
-export const crearJugador = async ({
-  nombre,
-  correo,
-  telf,
-}: Prisma.JugadoresCreateInput) => {
+// export const crearJugadorSinRelacionarAInvitado = async (
+export const crearJugadorSinSerInvitado = async (
+  { nombre, usuario, contrasena }: Prisma.JugadoresCreateInput,
+  { telf, correo }: Prisma.InvitadosCreateInput
+) => {
   const jugador = await prisma.jugadores.create({
     data: {
       nombre,
-      correo,
-      telf,
+      usuario,
+      contrasena,
+      invitado: {
+        create: {
+          correo,
+          telf,
+        },
+      },
+    },
+  });
+
+  return jugador;
+};
+
+// export const crearJugadorRelacionandoAInvitado = async (
+export const crearJugadorAPartirDeInvitacion = async (
+  { nombre, usuario, contrasena }: Prisma.JugadoresCreateInput,
+  { telf, correo }: Prisma.InvitadosCreateInput
+) => {
+  const jugador = await prisma.jugadores.create({
+    data: {
+      nombre,
+      usuario,
+      contrasena,
+      invitado: {
+        connect: {
+          correo,
+          telf,
+        },
+      },
     },
   });
 
@@ -34,15 +62,23 @@ export const obtenerJugadores = async () => {
 };
 
 export const actualizarJugador = async (
-  { nombre, correo, telf }: Prisma.JugadoresUpdateInput,
+  { nombre, contrasena }: Prisma.JugadoresUpdateInput,
+  { correo, telf }: Prisma.InvitadosUpdateInput,
   id: number
 ) => {
   const jugador = await prisma.jugadores.update({
-    where: { id },
+    where: {
+      id,
+    },
     data: {
       nombre,
-      correo,
-      telf,
+      contrasena,
+      invitado: {
+        update: {
+          correo,
+          telf,
+        },
+      },
     },
   });
 
@@ -60,7 +96,7 @@ export const eliminarJugador = async (id: number) => {
 };
 
 export const existeEmail = async (correo: string) => {
-  const jugador = await prisma.jugadores.findUnique({
+  const jugador = await prisma.invitados.findUnique({
     where: {
       correo,
     },
@@ -80,7 +116,7 @@ export const existeId = async (id: number) => {
 };
 
 export const existeTelf = async (telf: string) => {
-  const jugador = await prisma.jugadores.findUnique({
+  const jugador = await prisma.invitados.findUnique({
     where: {
       telf,
     },

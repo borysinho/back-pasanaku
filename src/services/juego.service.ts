@@ -7,7 +7,6 @@ export const crearJuego = async (
   { nombre, fecha_inicio, monto_total, moneda }: Prisma.JuegosCreateInput
 ) => {
   try {
-    // console.log({ nombre }, { fecha_inicio }, { monto_total }, { moneda });
     const date = new Date(fecha_inicio);
     const juego = await prisma.jugadores_Juegos.create({
       data: {
@@ -18,14 +17,12 @@ export const crearJuego = async (
             fecha_inicio: date,
             monto_total,
             moneda,
-            estado_juego: "nuevo",
+            estado_juego: "Nuevo",
           },
         },
         rol: "Creador",
       },
     });
-
-    console.log({ juego });
 
     return juego;
   } catch (error: any) {

@@ -8,11 +8,11 @@ datasource db {
 }
 
 enum EstadoJuego {
-  nuevo
-  invitacion
-  listoparaempezar
-  iniciado
-  finalizado
+  Nuevo
+  Invitacion
+  ListoParaEmpezar
+  Iniciado
+  Finalizado
 }
 
 enum Moneda {
@@ -23,7 +23,7 @@ enum Moneda {
 model Juegos{
   id Int @id @default(autoincrement())
 
-  estado_juego EstadoJuego @default(nuevo)
+  estado_juego EstadoJuego @default(Nuevo)
   moneda Moneda @default(BS)
 
   nombre String
@@ -36,18 +36,29 @@ model Juegos{
 }
 
 enum EstadoInvitacion {
-  Enviado
+  NoEnviado
+  EnvioCorrecto
+  EnvioFallido
   Aceptado
   Rechazado
   Cancelado
 }
 
 model Invitados{
+  
   id Int @id @default(autoincrement())
-  nombre String
   correo String @unique
   telf String @unique
   invitados_juegos Invitados_Juegos[]
+  jugadores_invitados Jugadores_Invitados[]
+  jugadores Jugadores[]
+}
+
+model Jugadores_Invitados {
+  id_jugador Int @unique
+  id_invitado Int @unique
+  jugador Jugadores @relation(fields: [id_jugador], references: [id])
+  invitado Invitados @relation(fields: [id_invitado], references: [id])
 }
 
 model Invitados_Juegos {
@@ -60,8 +71,8 @@ model Invitados_Juegos {
 
   @@id(name: "id", fields: [id_invitado, id_juego])
 
-  estado_invitacion EstadoInvitacion
-
+  estado_invitacion EstadoInvitacion @default(NoEnviado)
+  nombre_invitado String
   fecha DateTime? @default(now())
 }
 
@@ -85,12 +96,16 @@ model Turnos {
 
 model Jugadores {
   id Int @id @default(autoincrement())
+  id_invitado Int
+
+  invitado Invitados @relation(fields: [id_invitado], references: [id], onDelete: NoAction)
 
   jugadores_juegos Jugadores_Juegos[]
+  jugadores_invitados Jugadores_Invitados[]
 
-  nombre String @unique
-  correo String @unique
-  telf String @unique
+  nombre String
+  usuario String
+  contrasena String
 }
 
 enum Roles {

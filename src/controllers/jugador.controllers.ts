@@ -3,19 +3,41 @@ import { Request, Response } from "express";
 import {
   actualizarJugador,
   eliminarJugador,
-  crearJugador,
   obtenerJugadores,
   obtenerJugador,
+  crearJugadorSinSerInvitado,
+  crearJugadorAPartirDeInvitacion,
 } from "../services/jugador.service";
+import { Prisma } from "@prisma/client";
 
-export const crear = async (req: Request, res: Response) => {
+export const crearConInvitacion = async (req: Request, res: Response) => {
   try {
-    const { nombre, correo, telf } = req.body;
-    const jugador = await crearJugador({
-      nombre,
-      correo,
-      telf,
+    const jugadorData: Prisma.JugadoresCreateInput = req.body;
+    const invitadoData: Prisma.InvitadosCreateInput = req.body;
+
+    const jugador = await crearJugadorAPartirDeInvitacion(
+      jugadorData,
+      invitadoData
+    );
+
+    return res.status(201).json({
+      message: "Jugador creado correctamente",
+      data: jugador,
     });
+  } catch (error) {
+    return res.status(402).json({
+      message: "Error en jugador.controller.crear",
+      Errors: error,
+    });
+  }
+};
+
+export const crearSinInvitacion = async (req: Request, res: Response) => {
+  try {
+    const jugadorData: Prisma.JugadoresCreateInput = req.body;
+    const invitadoData: Prisma.InvitadosCreateInput = req.body;
+
+    const jugador = await crearJugadorSinSerInvitado(jugadorData, invitadoData);
 
     return res.status(201).json({
       message: "Jugador creado correctamente",
@@ -63,15 +85,10 @@ export const mostrarUno = async (req: Request, res: Response) => {
 export const actualizar = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
+    const jugadorData: Prisma.JugadoresUpdateInput = req.body;
+    const invitadoData: Prisma.InvitadosUpdateInput = req.body;
     const { nombre, correo, telf } = req.body;
-    const jugador = await actualizarJugador(
-      {
-        nombre,
-        correo,
-        telf,
-      },
-      id
-    );
+    const jugador = await actualizarJugador(jugadorData, invitadoData, id);
     return res.status(201).json({
       message: "Datos Actualizados Correctamente",
       data: jugador,
