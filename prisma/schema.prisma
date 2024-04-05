@@ -9,7 +9,7 @@ datasource db {
 
 enum EstadoJuego {
   Nuevo
-  Invitacion
+  EnviandoInvitaciones
   ListoParaEmpezar
   Iniciado
   Finalizado
@@ -35,14 +35,6 @@ model Juegos{
   turnos Turnos[]
 }
 
-enum EstadoInvitacion {
-  NoEnviado
-  EnvioCorrecto
-  EnvioFallido
-  Aceptado
-  Rechazado
-  Cancelado
-}
 
 model Invitados{
   
@@ -61,6 +53,19 @@ model Jugadores_Invitados {
   invitado Invitados @relation(fields: [id_invitado], references: [id])
 }
 
+enum EstadoNotificacion {
+  EnvioCorrecto
+  EnvioIncorrecto
+}
+
+enum EstadoInvitacion {
+  NoEnviado
+  Enviado
+  Aceptado
+  Rechazado
+  Cancelado
+
+}
 model Invitados_Juegos {
 
   id_invitado Int
@@ -72,6 +77,8 @@ model Invitados_Juegos {
   @@id(name: "id", fields: [id_invitado, id_juego])
 
   estado_invitacion EstadoInvitacion @default(NoEnviado)
+  estado_notificacion_whatsapp EstadoNotificacion @default(EnvioCorrecto)
+  estado_notificacion_correo EstadoNotificacion @default(EnvioCorrecto)
   nombre_invitado String
   fecha DateTime? @default(now())
 }
