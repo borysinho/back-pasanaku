@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
-    "build": "npx prisma migrate deploy && dtsc -b",
+    "build": "npx prisma migrate deploy && tsc -b",
     "start": "node ./dist/server.js",
     "remove": "rimraf ./dist"
   },
