@@ -64,7 +64,9 @@ export const eliminarJuego = async (id: number) => {
 };
 
 export const obtenerJuego = async (id_juego: number) => {
-  const juego = await prisma.juegos.findUnique({ where: { id: id_juego } });
+  const juego = await prisma.juegos.findFirstOrThrow({
+    where: { id: id_juego },
+  });
 
   return juego;
 };
@@ -93,3 +95,14 @@ export const obtenerJuegosDeJugador = async (id_jugador: number) => {
 
   return juegos;
 };
+
+// export const obtenerNombreJuego = async (id_jugador: number) => {
+//   const juego = await prisma.jugadores_Juegos.findUnique({
+//     include: {
+//       jugador: {},
+//       juego: {},
+//     },
+//   });
+
+//   return juego;
+// };

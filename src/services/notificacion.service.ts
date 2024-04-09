@@ -9,7 +9,10 @@ import { templateWhatsApp } from "../templates/whatsapp.template";
 import { templateEMail } from "../templates/email.template";
 import { Prisma } from "@prisma/client";
 import { obtenerJuego } from "./juego.service";
-import { obtenerCorreosInvitados } from "./invitado.service";
+import {
+  obtenerCorreosInvitados,
+  obtenerTelefonosInvitados,
+} from "./invitado.service";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -45,7 +48,11 @@ const enviarInvitacionCorreo = async (
   try {
     const res = await transporter.sendMail(mailOptions);
     return res;
-  } catch (error) {}
+  } catch (error: any) {
+    throw new Error(
+      `Error en notificacion.service.enviarInvitacionCorreo. Message: ${error.message}`
+    );
+  }
 
   // const res = transporter.sendMail(mailOptions, function (error, info) {
   //   if (error) {
@@ -64,14 +71,18 @@ export const notificarPorCorreo = async (
   idsInvitados: [],
   id_Juego: number
 ) => {
-  const nombre = await obtenerJuego(id_Juego);
-  console.log({ nombre });
-  const correos = await obtenerCorreosInvitados(idsInvitados);
-  console.log({ correos });
+  try {
+    const linkApp = process.env.LINK_APP || "";
+    const { nombre } = await obtenerJuego(id_Juego);
+    const correos = await obtenerCorreosInvitados(idsInvitados);
 
-  const linkApp = process.env.LINK_APP;
-
-  const invitacion = await enviarInvitacionCorreo(correos, { nombre }, linkApp);
+    const invitacion = await enviarInvitacionCorreo(correos, nombre, linkApp);
+    return invitacion;
+  } catch (error: any) {
+    throw new Error(
+      `Error en notificacion.service.notificarPorCorreo. Message: ${error.message}`
+    );
+  }
 };
 
 const enviarMensajeWhatsapp = async (para: string) => {
@@ -103,6 +114,10 @@ export const notificarPorWhatsapp = async (
   // const x: Prisma.Invitados_Juegos = {[]};
 
   try {
+    const telefonos = await obtenerTelefonosInvitados(idsInvitados);
+
+    console.log({ telefonos });
+
     let resp: any = [];
 
     for (const element of idsInvitados) {
@@ -124,6 +139,8 @@ export const notificarPorWhatsapp = async (
           invitado: {},
         },
       });
+
+      //TODO Actualizar los estados de las notificaciones y el estado de las invitaciones
 
       if (invitadoObtenido) {
         const mensaje = await enviarMensajeWhatsapp(

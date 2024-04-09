@@ -138,3 +138,27 @@ export const obtenerTelefonosInvitados = async (idsInvitados: []) => {
 
   return telefonos;
 };
+
+export const actualizarInvitadosJuegos = async (
+  data: Prisma.Invitados_JuegosUpdateInput,
+  id_juego: number,
+  id_invitado: number
+) => {
+  try {
+    const estados = await prisma.invitados_Juegos.update({
+      where: {
+        id: {
+          id_invitado,
+          id_juego,
+        },
+      },
+      data,
+    });
+
+    return estados;
+  } catch (error: any) {
+    throw new Error(
+      `Error en invitado.service.crearInvitado. Message: ${error.message}`
+    );
+  }
+};

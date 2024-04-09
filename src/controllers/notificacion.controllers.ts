@@ -10,27 +10,21 @@ export const notificaciones = async (req: Request, res: Response) => {
     const { idsInvitados } = req.body;
     const { id } = req.params;
 
-    // const mensajesWhatsapp = await notificarPorWhatsapp(
-    //   parseInt(id),
-    //   idsInvitados
-    // );
-
-    // const mensajesCorreo = await enviarInvitacionCorreo(
-    //   ["quirogaborys@hotmail.com", "borysquiroga@gmail.com"],
-    //   "AV. Alemana",
-    //   "https://drive.google.com/file/d/1kHFx2S7z4wrb8nLYPowPIYVRov-WCvRf/view"
-    // );
+    const mensajesWhatsapp = await notificarPorWhatsapp(
+      parseInt(id),
+      idsInvitados
+    );
 
     const mensajesCorreo = await notificarPorCorreo(idsInvitados, parseInt(id));
 
     return res.status(201).json({
       message: "Registro agregado correctamente",
       // data: [mensajesWhatsapp],
-      data: [mensajesCorreo],
+      data: [mensajesWhatsapp, mensajesCorreo],
     });
   } catch (error: any) {
     return res.status(402).json({
-      message: "Error en notificaciones.controller.testWhatsapp",
+      message: "Error en notificaciones.controller.notificaciones",
       error: error.message,
     });
   }
