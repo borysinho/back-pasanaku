@@ -75,8 +75,10 @@ export const notificarPorCorreo = async (
     const linkApp = process.env.LINK_APP || "";
     const { nombre } = await obtenerJuego(id_Juego);
     const correos = await obtenerCorreosInvitados(idsInvitados);
-
     const invitacion = await enviarInvitacionCorreo(correos, nombre, linkApp);
+
+    console.log({ invitacion });
+
     return invitacion;
   } catch (error: any) {
     throw new Error(
@@ -146,6 +148,8 @@ export const notificarPorWhatsapp = async (
         const mensaje = await enviarMensajeWhatsapp(
           invitadoObtenido.invitado.telf
         );
+
+        console.log({ mensaje });
 
         resp.push(mensaje);
       }

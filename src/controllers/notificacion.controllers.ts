@@ -10,17 +10,18 @@ export const notificaciones = async (req: Request, res: Response) => {
     const { idsInvitados } = req.body;
     const { id } = req.params;
 
+    const mensajesCorreo = await notificarPorCorreo(idsInvitados, parseInt(id));
+
     const mensajesWhatsapp = await notificarPorWhatsapp(
       parseInt(id),
       idsInvitados
     );
 
-    const mensajesCorreo = await notificarPorCorreo(idsInvitados, parseInt(id));
-
     return res.status(201).json({
       message: "Registro agregado correctamente",
       // data: [mensajesWhatsapp],
       data: [mensajesWhatsapp, mensajesCorreo],
+      // data: [mensajesCorreo],
     });
   } catch (error: any) {
     return res.status(402).json({
