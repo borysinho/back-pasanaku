@@ -82,3 +82,59 @@ export const eliminarInvitado = async (id: number) => {
     },
   });
 };
+
+export const obtenerCorreosInvitados = async (idsInvitados: []) => {
+  const arrIds: any = [];
+  for (const element of idsInvitados) {
+    const { id: id_invitado } = element;
+    arrIds.push(id_invitado);
+  }
+
+  const invitados = await prisma.invitados.findMany({
+    select: {
+      correo: true,
+    },
+    where: {
+      id: { in: arrIds },
+    },
+  });
+
+  const correos = [];
+
+  for (const element in invitados) {
+    if (Object.prototype.hasOwnProperty.call(invitados, element)) {
+      const value: string = invitados[element].correo;
+      correos.push(value);
+    }
+  }
+
+  return correos;
+};
+
+export const obtenerTelefonosInvitados = async (idsInvitados: []) => {
+  const arrIds: any = [];
+  for (const element of idsInvitados) {
+    const { id: id_invitado } = element;
+    arrIds.push(id_invitado);
+  }
+
+  const invitados = await prisma.invitados.findMany({
+    select: {
+      telf: true,
+    },
+    where: {
+      id: { in: arrIds },
+    },
+  });
+
+  const telefonos = [];
+
+  for (const element in invitados) {
+    if (Object.prototype.hasOwnProperty.call(invitados, element)) {
+      const value: string = invitados[element].telf;
+      telefonos.push(value);
+    }
+  }
+
+  return telefonos;
+};

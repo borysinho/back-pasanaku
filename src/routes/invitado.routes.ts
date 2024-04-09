@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  correosInvitados,
   crear,
   invitadosJuego,
   mostrarTodos,
@@ -18,6 +19,9 @@ class InvitadoRoutes {
 
     //Obtener todos los invitados
     this.router.get("/invitados", mostrarTodos);
+
+    //Obtener los correos de todos los invitados
+    this.router.get("/invitados/correos", correosInvitados);
 
     //Obtener un invitado por su identificador
     this.router.get("/invitados/:id", mostrarUno);

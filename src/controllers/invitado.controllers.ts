@@ -4,6 +4,7 @@ import {
   actualizarInvitado,
   crearInvitado,
   eliminarInvitado,
+  obtenerCorreosInvitados,
   obtenerInvitado,
   obtenerInvitados,
   obtenerInvitadosDeJuego,
@@ -33,10 +34,8 @@ export const crear = async (req: Request, res: Response) => {
 
 export const mostrarUno = async (req: Request, res: Response) => {
   try {
-    console.log(req.params);
     const { id } = req.params;
     const invitado = await obtenerInvitado(parseInt(id));
-    console.log({ invitado });
     return res.status(201).json({
       message: "Se obtuvo correctamente los datos",
       data: invitado,
@@ -108,6 +107,22 @@ export const invitadosJuego = async (req: Request, res: Response) => {
   } catch (error: any) {
     return res.status(402).json({
       message: "Error en juego.controller.invitadosJuego",
+      error: error.message,
+    });
+  }
+};
+
+export const correosInvitados = async (req: Request, res: Response) => {
+  try {
+    const { idsInvitados } = req.body;
+    const invitados = await obtenerCorreosInvitados(idsInvitados);
+    return res.status(201).json({
+      message: "Se obtuvo correctamente los datos",
+      data: invitados,
+    });
+  } catch (error: any) {
+    return res.status(402).json({
+      message: "Error en juego.controller.correosInvitados",
       error: error.message,
     });
   }

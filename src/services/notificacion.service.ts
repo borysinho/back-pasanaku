@@ -5,18 +5,25 @@
 import { Twilio } from "twilio";
 import prisma from "./prisma.service";
 import nodemailer from "nodemailer";
-// import htmlMailInvitation from "../resources/mail.invitation.resources";
+import { templateWhatsApp } from "../templates/whatsapp.template";
+import { templateEMail } from "../templates/email.template";
+import { Prisma } from "@prisma/client";
+import { obtenerJuego } from "./juego.service";
+import { obtenerCorreosInvitados } from "./invitado.service";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
-const linkApp = process.env.LINK_APP;
 const de = process.env.TWILIO_FROM_NUMBER;
 const client = new Twilio(accountSid, authToken);
 
 const correo_de = process.env.CORREO_DIR;
 const correo_pass = process.env.CORREO_PASS;
 
-export const enviarInvitacionCorreo = async (para: string) => {
+const enviarInvitacionCorreo = async (
+  para: string[],
+  nombre_juego: string,
+  link_app: string
+) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -25,37 +32,56 @@ export const enviarInvitacionCorreo = async (para: string) => {
     },
   });
 
+  const html: string = templateEMail(nombre_juego, link_app);
+
   const mailOptions = {
     from: correo_de,
     to: para,
     subject: "Invitación a Pasanaku",
     // text: "",
-    html: `<p>Te han invitao a jugar Pasanaku. 
-Puedes descargar la aplicación de ${linkApp}`,
+    html,
   };
 
-  // console.log({ transporter, mailOptions });
+  try {
+    const res = await transporter.sendMail(mailOptions);
+    return res;
+  } catch (error) {}
 
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      throw new Error(error.message);
-    } else {
-      console.log({ info: info.response });
-      return info.response;
-      // console.log("Email sent: " + info.response);
-    }
-  });
+  // const res = transporter.sendMail(mailOptions, function (error, info) {
+  //   if (error) {
+  //     throw new Error(error.message);
+  //   } else {
+  //     console.log({ info });
+  //     return { info };
+  //   }
+  // });
+
+  // console.log({ res });
+  // return res;
+};
+
+export const notificarPorCorreo = async (
+  idsInvitados: [],
+  id_Juego: number
+) => {
+  const nombre = await obtenerJuego(id_Juego);
+  console.log({ nombre });
+  const correos = await obtenerCorreosInvitados(idsInvitados);
+  console.log({ correos });
+
+  const linkApp = process.env.LINK_APP;
+
+  const invitacion = await enviarInvitacionCorreo(correos, { nombre }, linkApp);
 };
 
 const enviarMensajeWhatsapp = async (para: string) => {
   try {
+    const qr = process.env.LINK_QR_LITTLE || "";
     const mensaje = await client.messages.create({
-      mediaUrl: ["https://i.ibb.co/rQPcxHS/Test-Link-QR.png"],
+      mediaUrl: [qr],
       from: `whatsapp:${de}`,
       to: `whatsapp:${para}`,
-      body: `*¡Felicidades!* Usted ha sido invitado para ser parte de Pasanaku. 
-          
-  Para obtener la aplicación puede hacerlo escaneando el código QR o ingresando al siguiente enlace: _${linkApp}_`,
+      body: templateWhatsApp,
     });
     return mensaje;
     // .then((message: any) => {
@@ -104,13 +130,10 @@ export const notificarPorWhatsapp = async (
           invitadoObtenido.invitado.telf
         );
 
-        console.log({ mensaje });
         resp.push(mensaje);
       }
     }
-    // idsInvitados.forEach(async (element) => {
-    // });
-    console.log({ resp });
+
     return resp;
   } catch (error: any) {
     throw new Error(error.message);
