@@ -5,7 +5,7 @@
 import { Twilio } from "twilio";
 import prisma from "./prisma.service";
 import nodemailer from "nodemailer";
-import htmlMailInvitation from "../resources/mail.invitation.resources";
+// import htmlMailInvitation from "../resources/mail.invitation.resources";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -30,7 +30,8 @@ export const enviarInvitacionCorreo = async (para: string) => {
     to: para,
     subject: "Invitación a Pasanaku",
     // text: "",
-    html: `<p>Te han invitao a jugar Pasanaku. Puedes descargar la aplicación de ${linkApp}`,
+    html: `<p>Te han invitao a jugar Pasanaku. 
+Puedes descargar la aplicación de ${linkApp}`,
   };
 
   // console.log({ transporter, mailOptions });
