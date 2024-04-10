@@ -32,41 +32,41 @@ class JuegoRoutes {
     this.router.get("/juegos", obtenerJuegosDeTodosLosJugadores);
     this.router.get(
       "/jugadores/juegos/:id",
-      validarIdParam,
-      validarNoExisteIdJugador,
-      validateResult,
+      // validarIdParam,
+      // validarNoExisteIdJugador,
+      // validateResult,
       obtenerJuegosDeCreador
     );
 
     this.router.post(
       "/jugadores/:id/juegos",
-      validarFecha_InicioBody,
-      validarNombreBody,
-      validarMontoTotalBody,
-      validarIdParam,
-      validarNoExisteIdJugador,
-      validateResult,
+      // validarFecha_InicioBody,
+      // validarNombreBody,
+      // validarMontoTotalBody,
+      // validarIdParam,
+      // validarNoExisteIdJugador,
+      // validateResult,
       crear
     );
 
     this.router.put(
       "/jugadores/:id/juegos",
-      validarIdParam,
-      validarNoExisteIdJugador,
-      validarExisteNombreOpcional,
-      validarExisteFecha_InicioOpcional,
-      validarExisteMontoTotal,
-      validarExisteMoneda,
-      validateResult,
+      // validarIdParam,
+      // validarNoExisteIdJugador,
+      // validarExisteNombreOpcional,
+      // validarExisteFecha_InicioOpcional,
+      // validarExisteMontoTotal,
+      // validarExisteMoneda,
+      // validateResult,
       actualizarJuegoDeCreador
     );
 
     this.router.delete(
       "/jugadores/:id/juegos",
-      validarIdParam,
-      validarNoExisteIdJugador,
+      // validarIdParam,
+      // validarNoExisteIdJugador,
       // TODO Validar que el ID de juego corresponda al jugador que pretende eliminar
-      validateResult,
+      // validateResult,
       eliminarJuegoDeCreador
     );
   }
