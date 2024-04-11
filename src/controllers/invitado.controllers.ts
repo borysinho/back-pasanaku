@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import {
   actualizarInvitado,
+  buscarInvitado,
   crearInvitado,
   eliminarInvitado,
   obtenerCorreosInvitados,
@@ -9,6 +10,8 @@ import {
   obtenerInvitados,
   obtenerInvitadosDeJuego,
 } from "../services/invitado.service";
+import { json } from "stream/consumers";
+import { body } from "express-validator";
 
 export const crear = async (req: Request, res: Response) => {
   try {
@@ -124,6 +127,23 @@ export const correosInvitados = async (req: Request, res: Response) => {
   } catch (error: any) {
     return res.status(402).json({
       message: "Error en juego.controller.correosInvitados",
+      error: error.message,
+    });
+  }
+};
+
+export const validarDatosInvitado = async (req: Request, res: Response) => {
+  try {
+    const { correo, telf } = req.body;
+    console.log(req.body);
+    const invitado = await buscarInvitado({ correo, telf });
+    return res.status(201).json({
+      message: "Se obtuvo correctamente los datos",
+      data: invitado,
+    });
+  } catch (error: any) {
+    return res.status(402).json({
+      message: "Error en jugador.controllers.validarDatosInvitado",
       error: error.message,
     });
   }

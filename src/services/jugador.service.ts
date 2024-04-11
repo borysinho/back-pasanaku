@@ -8,6 +8,7 @@ export const crearJugadorSinSerInvitado = async (
   { nombre, usuario, contrasena }: Prisma.JugadoresCreateInput,
   { telf, correo }: Prisma.InvitadosCreateInput
 ) => {
+  console.log({ nombre, usuario, contrasena, telf, correo });
   const jugador = await prisma.jugadores.create({
     data: {
       nombre,
@@ -123,18 +124,4 @@ export const existeTelf = async (telf: string) => {
   });
 
   return jugador !== null;
-};
-
-export const existeInvitado = async ({
-  correo,
-  telf,
-}: Prisma.InvitadosWhereUniqueInput) => {
-  const existe = await prisma.invitados.findUnique({
-    where: {
-      correo,
-      telf,
-    },
-  });
-
-  return true && existe;
 };

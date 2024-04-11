@@ -34,8 +34,10 @@ export const crearConInvitacion = async (req: Request, res: Response) => {
 
 export const crearSinInvitacion = async (req: Request, res: Response) => {
   try {
-    const jugadorData: Prisma.JugadoresCreateInput = req.body;
-    const invitadoData: Prisma.InvitadosCreateInput = req.body;
+    const jugadorData: Prisma.JugadoresCreateInput = req.body.jugador;
+    const invitadoData: Prisma.InvitadosCreateInput = req.body.invitado;
+
+    console.log({ jugadorData, invitadoData });
 
     const jugador = await crearJugadorSinSerInvitado(jugadorData, invitadoData);
 
@@ -114,16 +116,6 @@ export const eliminar = async (req: Request, res: Response) => {
   } catch (error) {
     return res.status(402).json({
       message: "Error en jugador.controllers.eliminar",
-      Errors: error,
-    });
-  }
-};
-
-export const validarDatosInvitado = async (req: Request, res: Response) => {
-  try {
-  } catch (error) {
-    return res.status(402).json({
-      message: "Error en jugador.controllers.validarDatosInvitado",
       Errors: error,
     });
   }

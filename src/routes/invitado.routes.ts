@@ -5,6 +5,7 @@ import {
   invitadosJuego,
   mostrarTodos,
   mostrarUno,
+  validarDatosInvitado,
 } from "../controllers/invitado.controllers";
 
 class InvitadoRoutes {
@@ -19,6 +20,9 @@ class InvitadoRoutes {
 
     //Obtener todos los invitados
     this.router.get("/invitados", mostrarTodos);
+
+    //Obtener invitados a partir del correo y del teléfono
+    this.router.get("/invitados/validar", validarDatosInvitado);
 
     //Obtener los correos de todos los invitados
     this.router.get("/invitados/correos", correosInvitados);

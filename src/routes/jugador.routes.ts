@@ -32,9 +32,9 @@ class JugadorRoutes {
     this.router.get("/jugadores", mostrarTodos);
     this.router.get(
       "/jugadores/:id",
-      validarIdParam,
-      validarNoExisteIdJugador,
-      validateResult,
+      // validarIdParam,
+      // validarNoExisteIdJugador,
+      // validateResult,
       mostrarUno
     );
 
@@ -54,18 +54,18 @@ class JugadorRoutes {
 
     this.router.put(
       "/jugadores/:id",
-      validarIdParam,
-      validarExisteTelefonoOpcional,
-      validarExisteCorreoOpcional,
-      validateResult,
+      // validarIdParam,
+      // validarExisteTelefonoOpcional,
+      // validarExisteCorreoOpcional,
+      // validateResult,
       actualizar
     );
 
     this.router.delete(
       "/jugadores/:id",
-      validarIdParam,
-      validarNoExisteIdJugador,
-      validateResult,
+      // validarIdParam,
+      // validarNoExisteIdJugador,
+      // validateResult,
       eliminar
     );
   }
