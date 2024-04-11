@@ -125,6 +125,10 @@ export const existeTelf = async (telf: string) => {
   return jugador !== null;
 };
 
-export const existeInvitado = async ({}: Prisma.InvitadosInput) => {
-
-}
+export const existeInvitado = async ({
+  correo,
+  telf,
+}: Prisma.InvitadosWhereUniqueInput) => {
+  // const existe = await prisma.invitados.findUnique({
+  // })
+};
