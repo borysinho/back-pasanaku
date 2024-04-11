@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
-import http from "http";
 import { Query } from "express-serve-static-core";
 import {
   actualizarInvitado,
@@ -12,8 +11,7 @@ import {
   obtenerInvitados,
   obtenerInvitadosDeJuego,
 } from "../services/invitado.service";
-import { json } from "stream/consumers";
-import { body } from "express-validator";
+import { existeIDInvitado } from "../services/jugador.service";
 
 export const crear = async (req: Request, res: Response) => {
   try {
@@ -143,17 +141,32 @@ export const validarDatosInvitado = async (
   res: Response
 ) => {
   try {
-    // const { correo, telf } = req.headers;
-    // console.log(req.body);
     const correo = req.query.correo;
     const telf = req.query.telf;
 
-    console.log(req.query);
     const invitado = await buscarInvitado(correo, `+${telf}`);
-    return res.status(201).json({
-      message: "Se obtuvo correctamente los datos",
-      data: invitado,
-    });
+    if (invitado) {
+      const cuentaCreada = await existeIDInvitado(invitado.id);
+
+      if (cuentaCreada) {
+        return res.status(401).json({
+          message: "Ya existe una cuenta registrada con ese teléfono y correo",
+          data: cuentaCreada,
+        });
+      } else {
+        return res.status(201).json({
+          message: "Datos de invitacion validados",
+          status: "correcto",
+          data: invitado,
+        });
+      }
+    } else {
+      return res.status(428).json({
+        message:
+          "No se encuentran los datos del invitado. Verifique los datos e intente nuevamente",
+        data: invitado,
+      });
+    }
   } catch (error: any) {
     return res.status(402).json({
       message: "Error en jugador.controllers.validarDatosInvitado",

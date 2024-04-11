@@ -92,14 +92,14 @@ model Turnos {
 
 model Jugadores {
   id          Int @id @default(autoincrement())
-  id_invitado Int
+  id_invitado Int @unique
 
   invitado Invitados @relation(fields: [id_invitado], references: [id], onDelete: NoAction)
 
   jugadores_juegos Jugadores_Juegos[]
 
   nombre     String
-  usuario    String
+  usuario    String @unique
   contrasena String
 }
 

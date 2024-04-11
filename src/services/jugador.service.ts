@@ -191,3 +191,28 @@ export const existeTelf = async (telf: string) => {
 
   return jugador !== null;
 };
+
+export const existeIDInvitado = async (id_invitado: number) => {
+  const jugador = await prisma.jugadores.findUnique({
+    where: {
+      id_invitado: id_invitado,
+    },
+  });
+
+  return jugador;
+};
+
+export const existeUsuario = async (usuario: string) => {
+  const jugador = await prisma.jugadores.findUnique({
+    where: {
+      usuario,
+    },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+    },
+  });
+
+  return jugador;
+};

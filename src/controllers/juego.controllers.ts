@@ -27,7 +27,7 @@ export const crear = async (req: Request, res: Response) => {
   }
 };
 
-export const obtenerJuegosDeCreador = async (req: Request, res: Response) => {
+export const obtenerJuegosDeUnJugador = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const juegos = await obtenerJuegosDeJugador(parseInt(id));
@@ -81,16 +81,6 @@ export const actualizarJuegoDeCreador = async (req: Request, res: Response) => {
   } catch (error) {
     return res.status(402).json({
       message: "Error en juego.controllers.actualizarJuego",
-      error,
-    });
-  }
-};
-
-export const eliminarJuegoDeCreador = async (req: Request, res: Response) => {
-  try {
-  } catch (error) {
-    return res.status(402).json({
-      message: "Error en juego.controllers.eliminarJuegoDeCreador",
       error,
     });
   }

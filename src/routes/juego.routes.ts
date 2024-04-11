@@ -3,9 +3,8 @@ import { validateResult } from "../validations/result.validate";
 import {
   actualizarJuegoDeCreador,
   crear,
-  eliminarJuegoDeCreador,
-  obtenerJuegosDeCreador,
   obtenerJuegosDeTodosLosJugadores,
+  obtenerJuegosDeUnJugador,
 } from "../controllers/juego.controllers";
 import {
   validarExisteFecha_InicioOpcional,
@@ -31,11 +30,11 @@ class JuegoRoutes {
   initializeRoutes() {
     this.router.get("/juegos", obtenerJuegosDeTodosLosJugadores);
     this.router.get(
-      "/jugadores/juegos/:id",
+      "/jugadores/:id/juegos",
       // validarIdParam,
       // validarNoExisteIdJugador,
       // validateResult,
-      obtenerJuegosDeCreador
+      obtenerJuegosDeUnJugador
     );
 
     this.router.post(
@@ -59,15 +58,6 @@ class JuegoRoutes {
       // validarExisteMoneda,
       // validateResult,
       actualizarJuegoDeCreador
-    );
-
-    this.router.delete(
-      "/jugadores/:id/juegos",
-      // validarIdParam,
-      // validarNoExisteIdJugador,
-      // TODO Validar que el ID de juego corresponda al jugador que pretende eliminar
-      // validateResult,
-      eliminarJuegoDeCreador
     );
   }
 }

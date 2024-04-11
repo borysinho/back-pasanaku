@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { notificaciones } from "../controllers/notificacion.controllers";
-import jugadorRoutes from "./jugador.routes";
 
 class JugadorRoutes {
   router = Router();

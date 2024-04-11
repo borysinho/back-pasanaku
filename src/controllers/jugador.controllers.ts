@@ -1,4 +1,4 @@
-import { validationResult } from "express-validator";
+import { Query } from "express-serve-static-core";
 import { Request, Response } from "express";
 import {
   actualizarJugador,
@@ -7,13 +7,14 @@ import {
   obtenerJugador,
   crearJugadorSinSerInvitado,
   crearJugadorAPartirDeInvitacion,
+  existeUsuario,
 } from "../services/jugador.service";
 import { Prisma } from "@prisma/client";
 
 export const crearConInvitacion = async (req: Request, res: Response) => {
   try {
-    const jugadorData: Prisma.JugadoresCreateInput = req.body;
-    const invitadoData: Prisma.InvitadosCreateInput = req.body;
+    const jugadorData: Prisma.JugadoresCreateInput = req.body.jugador;
+    const invitadoData: Prisma.InvitadosCreateInput = req.body.invitado;
 
     const jugador = await crearJugadorAPartirDeInvitacion(
       jugadorData,
@@ -116,6 +117,40 @@ export const eliminar = async (req: Request, res: Response) => {
   } catch (error) {
     return res.status(402).json({
       message: "Error en jugador.controllers.eliminar",
+      Errors: error,
+    });
+  }
+};
+
+interface TypedRequestQuery<T extends Query> extends Express.Request {
+  query: T;
+}
+
+export const buscarUsuarioDeJugador = async (
+  req: TypedRequestQuery<{ usuario: string }>,
+  res: Response
+) => {
+  try {
+    const { usuario }: Prisma.JugadoresWhereUniqueInput = req.query;
+    const usuarioBuscado = await existeUsuario(usuario);
+    console.log({ usuario, usuarioBuscado });
+    if (usuarioBuscado) {
+      return res.status(201).json({
+        message: "Datos obtenidos correctamente",
+        status: "correcto",
+        data: usuarioBuscado,
+      });
+    } else {
+      return res.status(201).json({
+        message:
+          "No existe el una cuenta registrada con el usuario especificado",
+        status: "incorrecto",
+        data: usuarioBuscado,
+      });
+    }
+  } catch (error: any) {
+    return res.status(402).json({
+      message: "Error en jugador.controllers.buscarUsuario",
       Errors: error,
     });
   }

@@ -19,6 +19,7 @@ import {
   crearConInvitacion,
   mostrarTodos,
   mostrarUno,
+  buscarUsuarioDeJugador,
 } from "../controllers/jugador.controllers";
 
 class JugadorRoutes {
@@ -30,6 +31,7 @@ class JugadorRoutes {
 
   intializeRoutes() {
     this.router.get("/jugadores", mostrarTodos);
+    this.router.get("/jugadores/validar", buscarUsuarioDeJugador);
     this.router.get(
       "/jugadores/:id",
       // validarIdParam,
