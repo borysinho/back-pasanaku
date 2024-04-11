@@ -177,6 +177,8 @@ export const notificarPorWhatsapp = async (
         },
       });
 
+      console.log({ invitadoObtenido });
+
       //TODO Actualizar los estados de las notificaciones y el estado de las invitaciones
 
       if (invitadoObtenido) {
