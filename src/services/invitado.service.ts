@@ -169,10 +169,11 @@ export const actualizarInvitadosJuegos = async (
   }
 };
 
-export const buscarInvitado = async ({
-  correo,
-  telf,
-}: Prisma.InvitadosWhereUniqueInput) => {
+export const buscarInvitado = async (
+  correo: string,
+  telf: string
+  // }: Prisma.InvitadosWhereUniqueInput
+) => {
   const invitado = await prisma.invitados.findUnique({
     where: {
       correo,

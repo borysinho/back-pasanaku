@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
+import http from "http";
+import { Query } from "express-serve-static-core";
 import {
   actualizarInvitado,
   buscarInvitado,
@@ -132,11 +134,22 @@ export const correosInvitados = async (req: Request, res: Response) => {
   }
 };
 
-export const validarDatosInvitado = async (req: Request, res: Response) => {
+interface TypedRequestQuery<T extends Query> extends Express.Request {
+  query: T;
+}
+
+export const validarDatosInvitado = async (
+  req: TypedRequestQuery<{ telf: string; correo: string }>,
+  res: Response
+) => {
   try {
-    const { correo, telf } = req.body;
-    console.log(req.body);
-    const invitado = await buscarInvitado({ correo, telf });
+    // const { correo, telf } = req.headers;
+    // console.log(req.body);
+    const correo = req.query.correo;
+    const telf = req.query.telf;
+
+    console.log(req.query);
+    const invitado = await buscarInvitado(correo, `+${telf}`);
     return res.status(201).json({
       message: "Se obtuvo correctamente los datos",
       data: invitado,

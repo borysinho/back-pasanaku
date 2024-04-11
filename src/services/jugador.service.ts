@@ -8,7 +8,6 @@ export const crearJugadorSinSerInvitado = async (
   { nombre, usuario, contrasena }: Prisma.JugadoresCreateInput,
   { telf, correo }: Prisma.InvitadosCreateInput
 ) => {
-  console.log({ nombre, usuario, contrasena, telf, correo });
   const jugador = await prisma.jugadores.create({
     data: {
       nombre,
@@ -20,6 +19,12 @@ export const crearJugadorSinSerInvitado = async (
           telf,
         },
       },
+    },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      invitado: true,
     },
   });
 
@@ -43,6 +48,12 @@ export const crearJugadorAPartirDeInvitacion = async (
         },
       },
     },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      invitado: true,
+    },
   });
 
   return jugador;
@@ -51,13 +62,26 @@ export const crearJugadorAPartirDeInvitacion = async (
 export const obtenerJugador = async (id: number) => {
   const jugador = await prisma.jugadores.findUnique({
     where: { id },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      invitado: true,
+    },
   });
 
   return jugador;
 };
 
 export const obtenerJugadores = async () => {
-  const jugadores = await prisma.jugadores.findMany();
+  const jugadores = await prisma.jugadores.findMany({
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      invitado: true,
+    },
+  });
 
   return jugadores;
 };
@@ -81,6 +105,12 @@ export const actualizarJugador = async (
         },
       },
     },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      invitado: true,
+    },
   });
 
   return jugador;
@@ -90,6 +120,12 @@ export const eliminarJugador = async (id: number) => {
   const jugador = await prisma.jugadores.delete({
     where: {
       id: id,
+    },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      invitado: true,
     },
   });
 
@@ -101,6 +137,18 @@ export const existeEmail = async (correo: string) => {
     where: {
       correo,
     },
+    select: {
+      id: true,
+      correo: true,
+      telf: true,
+      jugadores: {
+        select: {
+          id: true,
+          nombre: true,
+          usuario: true,
+        },
+      },
+    },
   });
 
   return jugador !== null;
@@ -111,6 +159,12 @@ export const existeId = async (id: number) => {
     where: {
       id,
     },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      invitado: true,
+    },
   });
 
   return jugador !== null;
@@ -120,6 +174,18 @@ export const existeTelf = async (telf: string) => {
   const jugador = await prisma.invitados.findUnique({
     where: {
       telf,
+    },
+    select: {
+      id: true,
+      correo: true,
+      telf: true,
+      jugadores: {
+        select: {
+          id: true,
+          nombre: true,
+          usuario: true,
+        },
+      },
     },
   });
 
