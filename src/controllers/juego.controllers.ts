@@ -12,6 +12,7 @@ export const crear = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const datosJuego: Prisma.JuegosCreateInput = req.body;
+    console.log({ id, body: datosJuego });
     const juego = await crearJuego(parseInt(id), datosJuego);
 
     return res.status(201).json({

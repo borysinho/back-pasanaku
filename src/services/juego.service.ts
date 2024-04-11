@@ -8,6 +8,8 @@ export const crearJuego = async (
 ) => {
   try {
     const date = new Date(fecha_inicio);
+    console.log("En el servicio.",{ fechaDate: date, nombre, monto_total, moneda });
+    console.
     const juego = await prisma.jugadores_Juegos.create({
       data: {
         jugador: { connect: { id } },
