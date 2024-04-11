@@ -8,25 +8,31 @@ export const crearJuego = async (
 ) => {
   try {
     const date = new Date(fecha_inicio);
-    console.log({ date, nombre, monto_total, moneda });
-    const juego = await prisma.jugadores_Juegos.create({
-      data: {
-        jugador: { connect: { id } },
-        juego: {
-          create: {
-            nombre,
-            fecha_inicio: date,
-            monto_total,
-            moneda,
-            estado_juego: "Nuevo",
-          },
-        },
-        rol: "Creador",
-      },
-    });
 
-    console.log({ juego });
-    return juego;
+    const existeNombreDeJuego = await existeNombreJuegoEnJugador(id, nombre);
+
+    if (!existeNombreDeJuego) {
+      const juego = await prisma.jugadores_Juegos.create({
+        data: {
+          jugador: { connect: { id } },
+          juego: {
+            create: {
+              nombre,
+              fecha_inicio: date,
+              monto_total,
+              moneda,
+              estado_juego: "Nuevo",
+            },
+          },
+          rol: "Creador",
+        },
+      });
+
+      console.log({ juego });
+      return juego;
+    } else {
+      throw new Error("Ya existe un nombre de juego para este jugador");
+    }
   } catch (error: any) {
     // console.log(error.message);
     console.log({ error });
@@ -97,6 +103,24 @@ export const obtenerJuegosDeJugador = async (id_jugador: number) => {
   });
 
   return juegos;
+};
+
+const existeNombreJuegoEnJugador = async (
+  id_jugador: number,
+  nombre: string
+) => {
+  const juegoJugador = await prisma.jugadores_Juegos.findFirst({
+    where: {
+      juego: {
+        nombre,
+      },
+      jugador: {
+        id: id_jugador,
+      },
+    },
+  });
+
+  return juegoJugador;
 };
 
 // export const obtenerNombreJuego = async (id_jugador: number) => {

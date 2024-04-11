@@ -123,8 +123,9 @@ model Jugadores_Juegos {
   rol                 Roles                  @default(Jugador)
   estado              Estado_Jugadores_Juego @default(Participando)
 
-  id_jugador Int
-  id_juego   Int
+  id_jugador   Int
+  id_juego     Int
+  nombre_juego String
 
   fecha_ingreso DateTime? @default(now())
 }
