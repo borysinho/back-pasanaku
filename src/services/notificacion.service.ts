@@ -74,16 +74,10 @@ const actualizarEstadosInvitaciones = async (
 ) => {
   const estadoInvitacion = await prisma.invitados_Juegos.updateMany({
     where: {
-      AND: [
-        {
-          id_juego,
-        },
-        {
-          id_invitado: {
-            in: idsInvitados,
-          },
-        },
-      ],
+      id_juego,
+      id_invitado: {
+        in: idsInvitados,
+      },
     },
     data: estado,
   });
@@ -107,18 +101,20 @@ export const notificarPorCorreo = async (
     console.log({ invitacion });
 
     //TODO Arreglar los estados de los correos y whatsapp
+    //
 
-    await actualizarEstadosInvitaciones(idsInvitados, id_Juego, {
-      estado_invitacion: "Enviado",
-      estado_notificacion_correo: "EnvioCorrecto",
-      estado_notificacion_whatsapp: "EnvioCorrecto",
-    });
-
-    return invitacion;
+    // await actualizarEstadosInvitaciones(idsInvitados, id_Juego, {
+    //   estado_invitacion: "Enviado",
+    //   estado_notificacion_correo: "EnvioCorrecto",
+    //   estado_notificacion_whatsapp: "EnvioCorrecto",
+    // });
   } catch (error: any) {
-    throw new Error(
-      `Error en notificacion.service.notificarPorCorreo. Message: ${error.message}`
-    );
+    return {
+      correo: {
+        message: "Error en notificacion.service.notificarPorCorreo",
+        data: error.message,
+      },
+    };
   }
 };
 
@@ -194,6 +190,11 @@ export const notificarPorWhatsapp = async (
 
     return resp;
   } catch (error: any) {
-    throw new Error(error.message);
+    return {
+      whatsapp: {
+        message: "Error en notificacion.service.notificarPorWhatsapp",
+        data: error.message,
+      },
+    };
   }
 };
