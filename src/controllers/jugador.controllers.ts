@@ -26,7 +26,7 @@ export const crearConInvitacion = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(402).json({
-      message: "Error en jugador.controller.crear",
+      message: "Error en jugador.controllers.crear",
       Errors: error,
     });
   }
@@ -45,7 +45,7 @@ export const crearSinInvitacion = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(402).json({
-      message: "Error en jugador.controller.crear",
+      message: "Error en jugador.controllers.crear",
       Errors: error,
     });
   }
@@ -60,7 +60,7 @@ export const mostrarTodos = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(402).json({
-      message: "Error en jugador.controller.mostrarTodos",
+      message: "Error en jugador.controllers.mostrarTodos",
       Errors: error,
     });
   }
@@ -76,7 +76,7 @@ export const mostrarUno = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(402).json({
-      message: "Error en jugador.controller.mostrarUno",
+      message: "Error en jugador.controllers.mostrarUno",
       Errors: error,
     });
   }
@@ -95,7 +95,7 @@ export const actualizar = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(402).json({
-      message: "Error en jugador.actualizar.actualizar",
+      message: "Error en jugador.controllers.actualizar",
       Errors: error,
     });
   }
@@ -113,7 +113,17 @@ export const eliminar = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(402).json({
-      message: "Error en jugador.actualizar.eliminar",
+      message: "Error en jugador.controllers.eliminar",
+      Errors: error,
+    });
+  }
+};
+
+export const validarDatosInvitado = async (req: Request, res: Response) => {
+  try {
+  } catch (error) {
+    return res.status(402).json({
+      message: "Error en jugador.controllers.validarDatosInvitado",
       Errors: error,
     });
   }

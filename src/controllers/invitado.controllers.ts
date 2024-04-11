@@ -15,14 +15,14 @@ export const crear = async (req: Request, res: Response) => {
     const { idjuego } = req.params;
     const datosInvitado: Prisma.InvitadosCreateInput = req.body;
     const { nombre } = req.body;
-    const invitado = await crearInvitado(
-      parseInt(idjuego),
-      datosInvitado,
-      nombre
-    );
+    // const invitado = await crearInvitado(
+    //   parseInt(idjuego),
+    //   datosInvitado,
+    //   nombre
+    // );
     return res.status(201).json({
       message: "Registro agregado correctamente",
-      data: invitado,
+      // data: invitado,
     });
   } catch (error: any) {
     return res.status(402).json({

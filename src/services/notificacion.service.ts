@@ -73,10 +73,12 @@ export const notificarPorCorreo = async (
 ) => {
   try {
     const linkApp = process.env.LINK_APP || "";
+    console.log({ linkApp });
     const { nombre } = await obtenerJuego(id_Juego);
+    console.log({ nombre });
     const correos = await obtenerCorreosInvitados(idsInvitados);
+    console.log({ correos });
     const invitacion = await enviarInvitacionCorreo(correos, nombre, linkApp);
-
     console.log({ invitacion });
 
     return invitacion;

@@ -129,6 +129,12 @@ export const existeInvitado = async ({
   correo,
   telf,
 }: Prisma.InvitadosWhereUniqueInput) => {
-  // const existe = await prisma.invitados.findUnique({
-  // })
+  const existe = await prisma.invitados.findUnique({
+    where: {
+      correo,
+      telf,
+    },
+  });
+
+  return true && existe;
 };
