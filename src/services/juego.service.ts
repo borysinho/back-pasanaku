@@ -25,9 +25,11 @@ export const crearJuego = async (
       },
     });
 
+    console.log({ juego });
     return juego;
   } catch (error: any) {
     // console.log(error.message);
+    console.log({ error });
     throw new Error(
       `Error en juego.service.crearJuego. Message: ${error.message}`
     );

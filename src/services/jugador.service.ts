@@ -124,3 +124,7 @@ export const existeTelf = async (telf: string) => {
 
   return jugador !== null;
 };
+
+export const existeInvitado = async ({}: Prisma.InvitadosInput) => {
+
+}
