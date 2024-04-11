@@ -2,48 +2,37 @@ import { Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
 
 export const crearInvitado = async (
-  // {id}: Prisma.JuegosWhereInput,
   id: number,
-  // correo: string,
-  // telf: string,
-  { correo, telf }: Prisma.InvitadosWhereUniqueInput,
+  correo: string,
+  telf: string,
   { nombre_invitado }: Prisma.Invitados_JuegosCreateInput
 ) => {
-  // try {
-  //   const invitado = await prisma.invitados_Juegos.create({
-  //     data: {
-  //       nombre_invitado,
-  //       juego: { connect: { id } },
-  //       invitado: {
-  //         connectOrCreate: {
-  //           where: {
-  //             AND: [{ correo }, { telf }],
-  //           },
-  //         },
-  //       },
-  //     },
-  //   });
-  //
-  // const invitado = await prisma.invitados.create({
-  //   data: {
-  //     correo,
-  //     telf,
-  //     invitados_juegos: {
-  //       create: [
-  //         {
-  //           id_juego,
-  //           nombre_invitado: nombre,
-  //         },
-  //       ],
-  //     },
-  //   },
-  // });
-  // return invitado;
-  // } catch (error: any) {
-  //   throw new Error(
-  //     `Error en invitado.service.crearInvitado. Message: ${error.message}`
-  //   );
-  // }
+  try {
+    const invitado = await prisma.invitados_Juegos.create({
+      data: {
+        nombre_invitado,
+        juego: { connect: { id } },
+        invitado: {
+          connectOrCreate: {
+            where: {
+              correo,
+              telf,
+            },
+            create: {
+              correo,
+              telf,
+            },
+          },
+        },
+      },
+    });
+
+    return invitado;
+  } catch (error: any) {
+    throw new Error(
+      `Error en invitado.service.crearInvitado. Message: ${error.message}`
+    );
+  }
 };
 
 export const obtenerInvitado = async (id: number) => {
