@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import { Prisma } from "@prisma/client";
 import {
+  aceptarInvitacion,
   actualizarJuego,
   crearJuego,
+  obtenerInvitacionesDeJugador,
   obtenerJuegos,
   obtenerJuegosDeJugador,
 } from "../services/juego.service";
@@ -36,10 +38,10 @@ export const obtenerJuegosDeUnJugador = async (req: Request, res: Response) => {
       message: `Lista de Juegos de jugador id: ${parseInt(id)}`,
       data: juegos,
     });
-  } catch (error) {
+  } catch (error: any) {
     return res.status(402).json({
       message: "Error en juego.controllers.obtenerJuegosDeCreador",
-      error,
+      error: error.message,
     });
   }
 };
@@ -55,10 +57,10 @@ export const obtenerJuegosDeTodosLosJugadores = async (
       message: "Listado de todos los juegos",
       data: juegos,
     });
-  } catch (error) {
+  } catch (error: any) {
     return res.status(402).json({
       message: "Error en juego.controllers.obtenerJuegosDeTodosLosJugadores",
-      error,
+      error: error.message,
     });
   }
 };
@@ -78,10 +80,45 @@ export const actualizarJuegoDeCreador = async (req: Request, res: Response) => {
       message: "Datos de juego actualizados",
       data: juego,
     });
-  } catch (error) {
+  } catch (error: any) {
     return res.status(402).json({
       message: "Error en juego.controllers.actualizarJuego",
-      error,
+      error: error.message,
+    });
+  }
+};
+
+export const aceptarInvitacionDeJuego = async (req: Request, res: Response) => {
+  try {
+    const { id_juego, id_jugador } = req.params;
+    const detalleIngreso = await aceptarInvitacion(
+      parseInt(id_juego),
+      parseInt(id_jugador)
+    );
+    return res.status(201).json({
+      message: `Ingreso a juego correcto`,
+      data: detalleIngreso,
+    });
+  } catch (error: any) {
+    return res.status(402).json({
+      message: "Error en juego.controllers.aceptarInvitacionDeJuego",
+      error: error.message,
+    });
+  }
+};
+
+export const invitacionesDeJugador = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const invitaciones = await obtenerInvitacionesDeJugador(parseInt(id));
+    return res.status(201).json({
+      message: `Datos obtenidos correctamente`,
+      data: invitaciones,
+    });
+  } catch (error: any) {
+    return res.status(402).json({
+      message: "Error en juego.controllers.invitacionesDeJugador",
+      error: error.message,
     });
   }
 };

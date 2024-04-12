@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { validateResult } from "../validations/result.validate";
 import {
+  aceptarInvitacionDeJuego,
   actualizarJuegoDeCreador,
   crear,
+  invitacionesDeJugador,
   obtenerJuegosDeTodosLosJugadores,
   obtenerJuegosDeUnJugador,
 } from "../controllers/juego.controllers";
@@ -48,6 +50,11 @@ class JuegoRoutes {
       crear
     );
 
+    this.router.post(
+      "jugadores/:id_jugador/juegos/:id_juego",
+      aceptarInvitacionDeJuego
+    );
+
     this.router.put(
       "/jugadores/:id/juegos",
       // validarIdParam,
@@ -58,6 +65,10 @@ class JuegoRoutes {
       // validarExisteMoneda,
       // validateResult,
       actualizarJuegoDeCreador
+    );
+    this.router.get(
+      "/jugadores/:id/juegos/invitaciones",
+      invitacionesDeJugador
     );
   }
 }

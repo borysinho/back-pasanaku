@@ -42,6 +42,26 @@ export const crearJuego = async (
   }
 };
 
+export const aceptarInvitacion = async (
+  id_Juego: number,
+  id_jugador: number
+) => {
+  const jugadorJuego = await prisma.jugadores_Juegos.create({
+    data: {
+      estado: "Participando",
+      rol: "Jugador",
+      jugador: {
+        connect: { id: id_jugador },
+      },
+      juego: {
+        connect: { id: id_Juego },
+      },
+    },
+  });
+
+  return jugadorJuego;
+};
+
 export const actualizarJuego = async (
   id_juego: number,
   { nombre, fecha_inicio, monto_total, moneda }: Prisma.JuegosUpdateInput
@@ -123,13 +143,24 @@ const existeNombreJuegoEnJugador = async (
   return juegoJugador;
 };
 
-// export const obtenerNombreJuego = async (id_jugador: number) => {
-//   const juego = await prisma.jugadores_Juegos.findUnique({
-//     include: {
-//       jugador: {},
-//       juego: {},
-//     },
-//   });
+export const obtenerInvitacionesDeJugador = async (id_jugador: number) => {
+  const juego = await prisma.juegos.findMany({
+    where: {
+      invitados_juegos: {
+        some: {
+          invitado: {
+            is: {
+              jugadores: {
+                some: {
+                  id: id_jugador,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
 
-//   return juego;
-// };
+  return juego;
+};
