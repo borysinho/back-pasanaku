@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
+import { HttpException, HttpStatusCodes400 } from "../utils";
+import { buscarInvitado } from "./invitado.service";
 
 // const prisma = new PrismaClient();
 
@@ -36,27 +38,37 @@ export const crearJugadorAPartirDeInvitacion = async (
   { nombre, usuario, contrasena }: Prisma.JugadoresCreateInput,
   { telf, correo }: Prisma.InvitadosCreateInput
 ) => {
-  const jugador = await prisma.jugadores.create({
-    data: {
-      nombre,
-      usuario,
-      contrasena,
-      invitado: {
-        connect: {
-          correo,
-          telf,
+  const invitadoBuscado = await buscarInvitado(correo, telf);
+
+  if (invitadoBuscado) {
+    const jugador = await prisma.jugadores.create({
+      data: {
+        nombre,
+        usuario,
+        contrasena,
+        invitado: {
+          connect: {
+            correo,
+            telf,
+          },
         },
       },
-    },
-    select: {
-      id: true,
-      nombre: true,
-      usuario: true,
-      invitado: true,
-    },
-  });
 
-  return jugador;
+      select: {
+        id: true,
+        nombre: true,
+        usuario: true,
+        invitado: true,
+      },
+    });
+
+    return jugador;
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No existe un invitado asociado a ese Correo y Teléfono"
+    );
+  }
 };
 
 export const obtenerJugador = async (id: number) => {
@@ -91,45 +103,62 @@ export const actualizarJugador = async (
   { correo, telf }: Prisma.InvitadosUpdateInput,
   id: number
 ) => {
-  const jugador = await prisma.jugadores.update({
-    where: {
-      id,
-    },
-    data: {
-      nombre,
-      contrasena,
-      invitado: {
-        update: {
-          correo,
-          telf,
+  const jugadorBuscado = await obtenerJugador(id);
+
+  if (jugadorBuscado) {
+    const jugador = await prisma.jugadores.update({
+      where: {
+        id,
+      },
+      data: {
+        nombre,
+        contrasena,
+        invitado: {
+          update: {
+            correo,
+            telf,
+          },
         },
       },
-    },
-    select: {
-      id: true,
-      nombre: true,
-      usuario: true,
-      invitado: true,
-    },
-  });
+      select: {
+        id: true,
+        nombre: true,
+        usuario: true,
+        invitado: true,
+      },
+    });
 
-  return jugador;
+    return jugador;
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No existe un jugador con el ID indicado"
+    );
+  }
 };
 
 export const eliminarJugador = async (id: number) => {
-  const jugador = await prisma.jugadores.delete({
-    where: {
-      id: id,
-    },
-    select: {
-      id: true,
-      nombre: true,
-      usuario: true,
-      invitado: true,
-    },
-  });
+  const jugadorBuscado = await obtenerJugador(id);
+  if (jugadorBuscado) {
+    const jugador = await prisma.jugadores.delete({
+      where: {
+        id: id,
+      },
+      select: {
+        id: true,
+        nombre: true,
+        usuario: true,
+        invitado: true,
+      },
+    });
 
-  return jugador;
+    return jugador;
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No existe un jugador con el ID indicado"
+    );
+  }
 };
 
 export const existeEmail = async (correo: string) => {
@@ -192,7 +221,7 @@ export const existeTelf = async (telf: string) => {
   return jugador !== null;
 };
 
-export const existeIDInvitado = async (id_invitado: number) => {
+export const obtenerCuentaCreadaDeUnInvitado = async (id_invitado: number) => {
   const jugador = await prisma.jugadores.findUnique({
     where: {
       id_invitado: id_invitado,

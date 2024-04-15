@@ -1,13 +1,6 @@
 import { Router } from "express";
 import { validateResult } from "../validations/result.validate";
-import {
-  aceptarInvitacionDeJuego,
-  actualizarJuegoDeCreador,
-  crear,
-  invitacionesDeJugador,
-  obtenerJuegosDeTodosLosJugadores,
-  obtenerJuegosDeUnJugador,
-} from "../controllers/juego.controllers";
+import juegoController from "../controllers/juego.controllers";
 import {
   validarExisteFecha_InicioOpcional,
   validarExisteMoneda,
@@ -30,13 +23,16 @@ class JuegoRoutes {
   }
 
   initializeRoutes() {
-    this.router.get("/juegos", obtenerJuegosDeTodosLosJugadores);
+    this.router.get(
+      "/juegos",
+      juegoController.obtenerJuegosDeTodosLosJugadores
+    );
     this.router.get(
       "/jugadores/:id/juegos",
       // validarIdParam,
       // validarNoExisteIdJugador,
       // validateResult,
-      obtenerJuegosDeUnJugador
+      juegoController.obtenerJuegosDeUnJugador
     );
 
     this.router.post(
@@ -47,16 +43,16 @@ class JuegoRoutes {
       // validarIdParam,
       // validarNoExisteIdJugador,
       // validateResult,
-      crear
+      juegoController.crear
     );
 
     this.router.post(
       "jugadores/:id_jugador/juegos/:id_juego",
-      aceptarInvitacionDeJuego
+      juegoController.aceptarInvitacionDeJuego
     );
 
     this.router.put(
-      "/jugadores/:id/juegos",
+      "/jugadores/:id_jugador/juegos/:id_juego",
       // validarIdParam,
       // validarNoExisteIdJugador,
       // validarExisteNombreOpcional,
@@ -64,11 +60,15 @@ class JuegoRoutes {
       // validarExisteMontoTotal,
       // validarExisteMoneda,
       // validateResult,
-      actualizarJuegoDeCreador
+      juegoController.actualizarJuegoDeCreador
     );
     this.router.get(
       "/jugadores/:id/juegos/invitaciones",
-      invitacionesDeJugador
+      juegoController.invitacionesDeJugador
+    );
+    this.router.delete(
+      "/jugadores/:id_jugador/juegos/:id_juego",
+      juegoController.eliminarJuegoDeCreador
     );
   }
 }

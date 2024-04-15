@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { notificaciones } from "../controllers/notificacion.controllers";
+import notificacionesController from "../controllers/notificacion.controllers";
 
 class JugadorRoutes {
   router = Router();
@@ -9,7 +9,10 @@ class JugadorRoutes {
   }
 
   intializeRoutes() {
-    this.router.post("/jugadores/juegos/:id/notificaciones", notificaciones);
+    this.router.post(
+      "/jugadores/juegos/:id/notificaciones",
+      notificacionesController.enviarCorreoYWhatsAppAInvitados
+    );
   }
 }
 

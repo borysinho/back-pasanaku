@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
+import { obtenerJuego } from "./juego.service";
+import { HttpException, HttpStatusCodes400 } from "../utils";
 
 export const crearInvitado = async (
   id: number,
@@ -8,7 +10,9 @@ export const crearInvitado = async (
   nombre_invitado: string
   // { nombre_invitado }: Prisma.Invitados_JuegosCreateInput
 ) => {
-  try {
+  const juego = await obtenerJuego(id);
+
+  if (juego) {
     const invitado = await prisma.invitados_Juegos.create({
       data: {
         nombre_invitado,
@@ -29,9 +33,10 @@ export const crearInvitado = async (
     });
 
     return invitado;
-  } catch (error: any) {
-    throw new Error(
-      `Error en invitado.service.crearInvitado. Message: ${error.message}`
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No existe un juego asociado al ID especificado"
     );
   }
 };

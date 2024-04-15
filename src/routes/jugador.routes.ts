@@ -12,15 +12,7 @@ import {
   validarExisteCorreoOpcional,
 } from "../validations/jugador.validation";
 
-import {
-  actualizar,
-  eliminar,
-  crearSinInvitacion,
-  crearConInvitacion,
-  mostrarTodos,
-  mostrarUno,
-  buscarUsuarioDeJugador,
-} from "../controllers/jugador.controllers";
+import jugadorController from "../controllers/jugador.controllers";
 
 class JugadorRoutes {
   router = Router();
@@ -30,14 +22,17 @@ class JugadorRoutes {
   }
 
   intializeRoutes() {
-    this.router.get("/jugadores", mostrarTodos);
-    this.router.get("/jugadores/validar", buscarUsuarioDeJugador);
+    this.router.get("/jugadores", jugadorController.mostrarTodos);
+    this.router.get(
+      "/jugadores/validar",
+      jugadorController.buscarUsuarioDeJugador
+    );
     this.router.get(
       "/jugadores/:id",
       // validarIdParam,
       // validarNoExisteIdJugador,
       // validateResult,
-      mostrarUno
+      jugadorController.mostrarUno
     );
 
     this.router.post(
@@ -49,10 +44,13 @@ class JugadorRoutes {
       // validarNoExisteEmailJugador,
       // validarNoExisteTelfJugador,
       // validateResult,
-      crearConInvitacion
+      jugadorController.crearConInvitacion
     );
 
-    this.router.post("/jugadores/norelacionar", crearSinInvitacion);
+    this.router.post(
+      "/jugadores/norelacionar",
+      jugadorController.crearSinInvitacion
+    );
 
     this.router.put(
       "/jugadores/:id",
@@ -60,7 +58,7 @@ class JugadorRoutes {
       // validarExisteTelefonoOpcional,
       // validarExisteCorreoOpcional,
       // validateResult,
-      actualizar
+      jugadorController.actualizar
     );
 
     this.router.delete(
@@ -68,7 +66,7 @@ class JugadorRoutes {
       // validarIdParam,
       // validarNoExisteIdJugador,
       // validateResult,
-      eliminar
+      jugadorController.eliminar
     );
   }
 }

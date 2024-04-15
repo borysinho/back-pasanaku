@@ -11,132 +11,64 @@ import {
   obtenerInvitados,
   obtenerInvitadosDeJuego,
 } from "../services/invitado.service";
-import { existeIDInvitado } from "../services/jugador.service";
+import { obtenerCuentaCreadaDeUnInvitado } from "../services/jugador.service";
+import {
+  HttpException,
+  HttpStatusCodes200,
+  HttpStatusCodes400,
+  HttpStatusCodes500,
+  catchedAsync,
+  response,
+} from "../utils";
 
-export const crear = async (req: Request, res: Response) => {
-  try {
-    const { idjuego } = req.params;
-    const { telf, correo, nombre } = req.body;
-    const invitado = await crearInvitado(
-      parseInt(idjuego),
-      correo,
-      telf,
-      nombre
-    );
-
-    return res.status(201).json({
-      message: "Registro agregado correctamente",
-      data: invitado,
-    });
-  } catch (error: any) {
-    return res.status(402).json({
-      message: "Error en juego.controller.crear",
-      error: error.message,
-    });
-  }
+const crear = async (req: Request, res: Response) => {
+  const { idjuego } = req.params;
+  const { telf, correo, nombre } = req.body;
+  const invitado = await crearInvitado(parseInt(idjuego), correo, telf, nombre);
+  response(res, HttpStatusCodes200.OK, invitado);
 };
 
-export const mostrarUno = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const invitado = await obtenerInvitado(parseInt(id));
-    return res.status(201).json({
-      message: "Se obtuvo correctamente los datos",
-      data: invitado,
-    });
-  } catch (error) {
-    return res.status(402).json({
-      message: "Error en juego.controller.mostrarUno",
-      error,
-    });
-  }
+const mostrarUno = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const invitado = await obtenerInvitado(parseInt(id));
+  response(res, HttpStatusCodes200.OK, invitado);
 };
 
-export const mostrarTodos = async (req: Request, res: Response) => {
-  try {
-    const invitados = await obtenerInvitados();
-    return res.status(201).json({
-      message: "Se obtuvo correctamente los datos",
-      data: invitados,
-    });
-  } catch (error) {
-    return res.status(402).json({
-      message: "Error en juego.controller.mostrarTodos",
-      error,
-    });
-  }
+const mostrarTodos = async (req: Request, res: Response) => {
+  const invitados = await obtenerInvitados();
+  response(res, HttpStatusCodes200.OK, invitados);
 };
 
-export const actualizar = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const invitadoData: Prisma.InvitadosUpdateInput = req.body;
-    const invitado = await actualizarInvitado(parseInt(id), invitadoData);
-    return res.status(201).json({
-      message: "Se obtuvo correctamente los datos",
-      data: invitado,
-    });
-  } catch (error) {
-    return res.status(402).json({
-      message: "Error en juego.controller.actualizar",
-      error,
-    });
-  }
+const actualizar = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const invitadoData: Prisma.InvitadosUpdateInput = req.body;
+  const invitado = await actualizarInvitado(parseInt(id), invitadoData);
+  response(res, HttpStatusCodes200.OK, invitado);
 };
 
-export const eliminar = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const invitado = await eliminarInvitado(parseInt(id));
-    return res.status(201).json({
-      message: "Se obtuvo correctamente los datos",
-      data: invitado,
-    });
-  } catch (error) {
-    return res.status(402).json({
-      message: "Error en juego.controller.eliminar",
-      error,
-    });
-  }
+const eliminar = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const invitado = await eliminarInvitado(parseInt(id));
+  response(res, HttpStatusCodes200.OK, invitado);
 };
 
-export const invitadosJuego = async (req: Request, res: Response) => {
-  try {
-    const { idjuego } = req.params;
-    const invitados = await obtenerInvitadosDeJuego(parseInt(idjuego));
-    return res.status(201).json({
-      message: "Se obtuvo correctamente los datos",
-      data: invitados,
-    });
-  } catch (error: any) {
-    return res.status(402).json({
-      message: "Error en juego.controller.invitadosJuego",
-      error: error.message,
-    });
-  }
+const invitadosJuego = async (req: Request, res: Response) => {
+  const { idjuego } = req.params;
+  const invitados = await obtenerInvitadosDeJuego(parseInt(idjuego));
+  response(res, HttpStatusCodes200.OK, invitados);
 };
 
-export const correosInvitados = async (req: Request, res: Response) => {
-  try {
-    const { idsInvitados } = req.body;
-    const invitados = await obtenerCorreosInvitados(idsInvitados);
-    return res.status(201).json({
-      message: "Se obtuvo correctamente los datos",
-      data: invitados,
-    });
-  } catch (error: any) {
-    return res.status(402).json({
-      message: "Error en juego.controller.correosInvitados",
-      error: error.message,
-    });
-  }
+const correosInvitados = async (req: Request, res: Response) => {
+  const { idsInvitados } = req.body;
+  const invitados = await obtenerCorreosInvitados(idsInvitados);
+  response(res, HttpStatusCodes200.OK, invitados);
 };
 
 interface TypedRequestQuery<T extends Query> extends Express.Request {
   query: T;
 }
 
-export const validarDatosInvitado = async (
+const validarDatosInvitado = async (
   req: TypedRequestQuery<{ telf: string; correo: string }>,
   res: Response
 ) => {
@@ -146,31 +78,36 @@ export const validarDatosInvitado = async (
 
     const invitado = await buscarInvitado(correo, `+${telf}`);
     if (invitado) {
-      const cuentaCreada = await existeIDInvitado(invitado.id);
+      const existeCuentaCreada = await obtenerCuentaCreadaDeUnInvitado(
+        invitado.id
+      );
 
-      if (cuentaCreada) {
-        return res.status(401).json({
-          message: "Ya existe una cuenta registrada con ese teléfono y correo",
-          data: cuentaCreada,
-        });
+      if (existeCuentaCreada) {
+        throw new HttpException(
+          HttpStatusCodes500.INTERNAL_SERVER_ERROR,
+          "Ya existe una cuenta registrada con ese teléfono y correo"
+        );
       } else {
-        return res.status(201).json({
-          message: "Datos de invitacion validados",
-          status: "correcto",
-          data: invitado,
-        });
+        response(res, HttpStatusCodes200.OK, invitado);
       }
     } else {
-      return res.status(428).json({
-        message:
-          "No se encuentran los datos del invitado. Verifique los datos e intente nuevamente",
-        data: invitado,
-      });
+      throw new HttpException(
+        HttpStatusCodes500.INTERNAL_SERVER_ERROR,
+        "No se encuentran los datos del invitado."
+      );
     }
   } catch (error: any) {
-    return res.status(402).json({
-      message: "Error en jugador.controllers.validarDatosInvitado",
-      error: error.message,
-    });
+    throw new HttpException(HttpStatusCodes400.BAD_REQUEST, error.message);
   }
+};
+
+export default {
+  crear: catchedAsync(crear),
+  mostrarUno: catchedAsync(mostrarUno),
+  mostrarTodos: catchedAsync(mostrarTodos),
+  actualizar: catchedAsync(actualizar),
+  eliminar: catchedAsync(eliminar),
+  invitadosJuego: catchedAsync(invitadosJuego),
+  correosInvitados: catchedAsync(correosInvitados),
+  validarDatosInvitado: catchedAsync(validarDatosInvitado),
 };

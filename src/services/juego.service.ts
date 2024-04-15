@@ -1,43 +1,39 @@
 import { Prisma } from "@prisma/client";
 
 import prisma from "./prisma.service";
+import { HttpException, HttpStatusCodes400 } from "../utils";
+import { existeId, obtenerJugador } from "./jugador.service";
 
 export const crearJuego = async (
   id: number,
   { nombre, fecha_inicio, monto_total, moneda }: Prisma.JuegosCreateInput
 ) => {
-  try {
-    const date = new Date(fecha_inicio);
+  const date = new Date(fecha_inicio);
 
-    const existeNombreDeJuego = await existeNombreJuegoEnJugador(id, nombre);
+  const existeNombreDeJuego = await existeNombreJuegoEnJugador(id, nombre);
 
-    if (!existeNombreDeJuego) {
-      const juego = await prisma.jugadores_Juegos.create({
-        data: {
-          jugador: { connect: { id } },
-          juego: {
-            create: {
-              nombre,
-              fecha_inicio: date,
-              monto_total,
-              moneda,
-              estado_juego: "Nuevo",
-            },
+  if (!existeNombreDeJuego) {
+    const juego = await prisma.jugadores_Juegos.create({
+      data: {
+        jugador: { connect: { id } },
+        juego: {
+          create: {
+            nombre,
+            fecha_inicio: date,
+            monto_total,
+            moneda,
+            estado_juego: "Nuevo",
           },
-          rol: "Creador",
         },
-      });
+        rol: "Creador",
+      },
+    });
 
-      console.log({ juego });
-      return juego;
-    } else {
-      throw new Error("Ya existe un nombre de juego para este jugador");
-    }
-  } catch (error: any) {
-    // console.log(error.message);
-    console.log({ error });
-    throw new Error(
-      `Error en juego.service.crearJuego. Message: ${error.message}`
+    return juego;
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Ya existe un nombre de juego para este jugador"
     );
   }
 };
@@ -46,50 +42,97 @@ export const aceptarInvitacion = async (
   id_Juego: number,
   id_jugador: number
 ) => {
-  const jugadorJuego = await prisma.jugadores_Juegos.create({
-    data: {
-      estado: "Participando",
-      rol: "Jugador",
-      jugador: {
-        connect: { id: id_jugador },
-      },
-      juego: {
-        connect: { id: id_Juego },
-      },
-    },
-  });
+  const juegoBuscado = await obtenerJuego(id_Juego);
+  const jugadorBuscado = await obtenerJugador(id_jugador);
 
-  return jugadorJuego;
+  if (juegoBuscado && jugadorBuscado) {
+    const jugadorJuego = await prisma.jugadores_Juegos.create({
+      data: {
+        estado: "Participando",
+        rol: "Jugador",
+        jugador: {
+          connect: { id: id_jugador },
+        },
+        juego: {
+          connect: { id: id_Juego },
+        },
+      },
+    });
+
+    return jugadorJuego;
+  } else {
+    let message: string = "";
+    if (!jugadorBuscado)
+      message += `No existe un Jugador con el ID especificado`;
+    if (!juegoBuscado) message += `No existe un Juego con el ID especificado`;
+
+    throw new HttpException(HttpStatusCodes400.BAD_REQUEST, message);
+  }
 };
 
 export const actualizarJuego = async (
+  id_jugador: number,
   id_juego: number,
   { nombre, fecha_inicio, monto_total, moneda }: Prisma.JuegosUpdateInput
 ) => {
   // const date = new Date(fecha_inicio);
-  const juego = await prisma.juegos.update({
+  // const juegoBuscado = await obtenerJuego(id_juego);
+  const jugador_juego = await prisma.jugadores_Juegos.findFirst({
     where: {
-      id: id_juego,
-    },
-    data: {
-      nombre,
-      fecha_inicio,
-      monto_total,
-      moneda,
+      id_juego,
+      id_jugador,
+      rol: "Creador",
     },
   });
 
-  return juego;
+  if (jugador_juego) {
+    const juego = await prisma.juegos.update({
+      where: {
+        id: id_juego,
+      },
+      data: {
+        nombre,
+        fecha_inicio,
+        monto_total,
+        moneda,
+      },
+    });
+
+    return juego;
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Validar que el rol del Jugador en el Juego especificado sea Creador"
+    );
+  }
 };
 
-export const eliminarJuego = async (id: number) => {
-  const juego = await prisma.juegos.delete({
+export const eliminarJuegoDeUnCreador = async (
+  id_jugador: number,
+  id_juego: number
+) => {
+  const jugador_juego = await prisma.jugadores_Juegos.findFirst({
     where: {
-      id: id,
+      id_juego,
+      id_jugador,
+      rol: "Creador",
     },
   });
 
-  return juego;
+  if (jugador_juego) {
+    const juego = await prisma.juegos.delete({
+      where: {
+        id: id_juego,
+      },
+    });
+
+    return juego;
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Validar que el rol del Jugador en el Juego especificado sea Creador"
+    );
+  }
 };
 
 export const obtenerJuego = async (id_juego: number) => {
@@ -112,35 +155,53 @@ export const obtenerJuegos = async () => {
 };
 
 export const obtenerJuegosDeJugador = async (id_jugador: number) => {
-  const juegos = await prisma.juegos.findMany({
-    where: {
-      jugadores_juegos: {
-        some: {
-          id_jugador,
+  const jugador = await existeId(id_jugador);
+
+  if (jugador) {
+    const juegos = await prisma.juegos.findMany({
+      where: {
+        jugadores_juegos: {
+          some: {
+            id_jugador,
+          },
         },
       },
-    },
-  });
+    });
 
-  return juegos;
+    return juegos;
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No un jugador asociado al ID especificado"
+    );
+  }
 };
 
 const existeNombreJuegoEnJugador = async (
   id_jugador: number,
   nombre: string
 ) => {
-  const juegoJugador = await prisma.jugadores_Juegos.findFirst({
-    where: {
-      juego: {
-        nombre,
-      },
-      jugador: {
-        id: id_jugador,
-      },
-    },
-  });
+  const jugador = await existeId(id_jugador);
 
-  return juegoJugador;
+  if (jugador) {
+    const juegoJugador = await prisma.jugadores_Juegos.findFirst({
+      where: {
+        juego: {
+          nombre,
+        },
+        jugador: {
+          id: id_jugador,
+        },
+      },
+    });
+
+    return juegoJugador;
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No un jugador asociado al ID especificado"
+    );
+  }
 };
 
 export const obtenerInvitacionesDeJugador = async (id_jugador: number) => {

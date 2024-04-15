@@ -11,8 +11,18 @@ import { Prisma } from "@prisma/client";
 import { obtenerJuego } from "./juego.service";
 import {
   obtenerCorreosInvitados,
+  obtenerInvitado,
   obtenerTelefonosInvitados,
 } from "./invitado.service";
+import {
+  HttpException,
+  HttpStatusCodes400,
+  HttpStatusCodes500,
+} from "../utils";
+import { stringify } from "querystring";
+import { Address } from "cluster";
+import Mail from "nodemailer/lib/mailer";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -46,12 +56,19 @@ const enviarInvitacionCorreo = async (
   };
 
   try {
-    const res = await transporter.sendMail(mailOptions);
-    return res;
-  } catch (error: any) {
-    throw new Error(
-      `Error en notificacion.service.enviarInvitacionCorreo. Message: ${error.message}`
-    );
+    const { messageId, accepted, rejected, response } =
+      await transporter.sendMail(mailOptions);
+    return {
+      mailResult: {
+        error: false,
+        messageId,
+        accepted,
+        rejected,
+        response,
+      },
+    };
+  } catch (err: any) {
+    return new HttpException(HttpStatusCodes500.SERVICE_UNAVAILABLE, err);
   }
 
   // const res = transporter.sendMail(mailOptions, function (error, info) {
@@ -67,8 +84,137 @@ const enviarInvitacionCorreo = async (
   // return res;
 };
 
-const actualizarEstadosInvitaciones = async (
+const acceptedOrRejectedToString = (value: (string | Mail.Address)[]) => {
+  const acceptedRecipients: string[] = value.map(
+    (recipient: string | Mail.Address) => {
+      if (typeof recipient === "string") {
+        return recipient;
+      } else {
+        return recipient.address;
+      }
+    }
+  );
+
+  return acceptedRecipients;
+};
+
+export const notificarPorCorreo = async (
   idsInvitados: [],
+  id_Juego: number
+) => {
+  try {
+    const linkApp = process.env.LINK_APP || "";
+    const { nombre } = await obtenerJuego(id_Juego);
+    const correos = await obtenerCorreosInvitados(idsInvitados);
+    const invitacion = await enviarInvitacionCorreo(correos, nombre, linkApp);
+
+    //ACTUALIZAMOS LOS ESTADOS DEL ENVÍO DEL CORREO
+    if (invitacion instanceof HttpException) {
+      actualizarEstadosCorreo(id_Juego, correos, {
+        estado_invitacion: "NoEnviado",
+        estado_notificacion_correo: "EnvioIncorrecto",
+      });
+    } else {
+      const accepted = acceptedOrRejectedToString(
+        invitacion.mailResult.accepted
+      );
+      const rejected = acceptedOrRejectedToString(
+        invitacion.mailResult.rejected
+      );
+
+      actualizarEstadosCorreo(id_Juego, accepted, {
+        estado_invitacion: "Enviado",
+        estado_notificacion_correo: "EnvioCorrecto",
+      });
+
+      actualizarEstadosCorreo(id_Juego, rejected, {
+        estado_invitacion: "Enviado",
+        estado_notificacion_correo: "EnvioIncorrecto",
+      });
+    }
+
+    return invitacion;
+  } catch (error: any) {
+    return new HttpException(HttpStatusCodes400.BAD_REQUEST, error.message);
+  }
+};
+
+const enviarMensajeWhatsapp = async (para: string) => {
+  try {
+    const qr = process.env.LINK_QR_LITTLE || "";
+    const { to, status } = await client.messages.create({
+      mediaUrl: [qr],
+      from: `whatsapp:${de}`,
+      to: `whatsapp:${para}`,
+      body: templateWhatsApp,
+    });
+    return {
+      error: false,
+      to,
+      status,
+    };
+    // .then((message: any) => {
+    //   return message;
+    // })
+    // .catch((error: any) => {
+    //   console.error(error.message);
+    //   throw new Error(error.message);
+    // });
+  } catch (error: any) {
+    return new HttpException(HttpStatusCodes500.SERVICE_UNAVAILABLE, error);
+  }
+};
+
+export const notificarPorWhatsapp = async (
+  idJuego: number,
+  idsInvitados: []
+) => {
+  let resp: any = [];
+  try {
+    const telefonos = await obtenerTelefonosInvitados(idsInvitados);
+    for (const element of idsInvitados) {
+      const { id: id_invitado } = element;
+
+      const invitadoObtenido = await obtenerInvitado(id_invitado);
+
+      //TODO Actualizar los estados de las notificaciones y el estado de las invitaciones
+
+      if (invitadoObtenido) {
+        const mensaje = await enviarMensajeWhatsapp(invitadoObtenido.telf);
+
+        //ACTUALIZAMOS LOS ESTADOS DEL ENVÍO 
+        if (mensaje instanceof HttpException) {
+          actualizarEstadosWhatsApp([invitadoObtenido.id], idJuego, {
+            estado_invitacion: "Enviado",
+            estado_notificacion_whatsapp: "EnvioIncorrecto",
+          });
+          resp.push({
+            error: true,
+            message: mensaje.getAttr(),
+          });
+        } else {
+          actualizarEstadosWhatsApp([invitadoObtenido.id], idJuego, {
+            estado_invitacion: "Enviado",
+            estado_notificacion_whatsapp: "EnvioCorrecto",
+          });
+          resp.push(mensaje);
+        }
+      }
+    }
+
+    return { whatsAppResult: resp };
+  } catch (error: any) {
+    const myError = new HttpException(
+      HttpStatusCodes500.SERVICE_UNAVAILABLE,
+      error
+    );
+    resp.push(myError.getAttr());
+    return { whatsAppResult: resp };
+  }
+};
+
+const actualizarEstadosWhatsApp = async (
+  idsInvitados: number[],
   id_juego: number,
   estado: Prisma.Invitados_JuegosUpdateInput
 ) => {
@@ -82,119 +228,29 @@ const actualizarEstadosInvitaciones = async (
     data: estado,
   });
 
+  console.log({ estadoInvitacion });
+
   return estadoInvitacion;
 };
 
-export const notificarPorCorreo = async (
-  idsInvitados: [],
-  id_Juego: number
+const actualizarEstadosCorreo = async (
+  id_juego: number,
+  correos: string[],
+  data: Prisma.Invitados_JuegosUpdateInput
 ) => {
-  try {
-    console.log({ idsInvitados, id_Juego });
-    const linkApp = process.env.LINK_APP || "";
-    console.log({ linkApp });
-    const { nombre } = await obtenerJuego(id_Juego);
-    console.log({ nombre });
-    const correos = await obtenerCorreosInvitados(idsInvitados);
-    console.log({ correos });
-    const invitacion = await enviarInvitacionCorreo(correos, nombre, linkApp);
-    console.log({ invitacion });
-
-    //TODO Arreglar los estados de los correos y whatsapp
-    //
-
-    // await actualizarEstadosInvitaciones(idsInvitados, id_Juego, {
-    //   estado_invitacion: "Enviado",
-    //   estado_notificacion_correo: "EnvioCorrecto",
-    //   estado_notificacion_whatsapp: "EnvioCorrecto",
-    // });
-  } catch (error: any) {
-    return {
-      correo: {
-        message: "Error en notificacion.service.notificarPorCorreo",
-        data: error.message,
+  console.log({ correos });
+  const invitados_juegos = prisma.invitados_Juegos.updateMany({
+    where: {
+      id_juego,
+      invitado: {
+        correo: {
+          in: correos,
+        },
       },
-    };
-  }
-};
+    },
+    data,
+  });
 
-const enviarMensajeWhatsapp = async (para: string) => {
-  try {
-    const qr = process.env.LINK_QR_LITTLE || "";
-    const mensaje = await client.messages.create({
-      mediaUrl: [qr],
-      from: `whatsapp:${de}`,
-      to: `whatsapp:${para}`,
-      body: templateWhatsApp,
-    });
-    return mensaje;
-    // .then((message: any) => {
-    //   return message;
-    // })
-    // .catch((error: any) => {
-    //   console.error(error.message);
-    //   throw new Error(error.message);
-    // });
-  } catch (error: any) {
-    throw new Error(error.message);
-  }
-};
-
-export const notificarPorWhatsapp = async (
-  idJuego: number,
-  idsInvitados: []
-) => {
-  // const x: Prisma.Invitados_Juegos = {[]};
-
-  try {
-    const telefonos = await obtenerTelefonosInvitados(idsInvitados);
-
-    console.log({ telefonos });
-
-    let resp: any = [];
-
-    for (const element of idsInvitados) {
-      const { id: id_invitado } = element;
-
-      const invitadoObtenido = await prisma.invitados_Juegos.update({
-        where: {
-          id: {
-            id_invitado,
-            id_juego: idJuego,
-          },
-        },
-
-        data: {
-          estado_invitacion: "Enviado",
-        },
-
-        include: {
-          invitado: {},
-        },
-      });
-
-      console.log({ invitadoObtenido });
-
-      //TODO Actualizar los estados de las notificaciones y el estado de las invitaciones
-
-      if (invitadoObtenido) {
-        const mensaje = await enviarMensajeWhatsapp(
-          invitadoObtenido.invitado.telf
-        );
-
-        console.log({ mensaje });
-
-        resp.push(mensaje);
-      }
-    }
-
-    return resp;
-  } catch (error: any) {
-    return {
-      whatsapp: {
-        message: "Error en notificacion.service.notificarPorWhatsapp",
-        data: error.message,
-      },
-    };
-  }
+  console.log({ invitados_juegos });
+  return invitados_juegos;
 };
