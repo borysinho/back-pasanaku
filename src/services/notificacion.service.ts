@@ -177,12 +177,10 @@ export const notificarPorWhatsapp = async (
 
       const invitadoObtenido = await obtenerInvitado(id_invitado);
 
-      //TODO Actualizar los estados de las notificaciones y el estado de las invitaciones
-
       if (invitadoObtenido) {
         const mensaje = await enviarMensajeWhatsapp(invitadoObtenido.telf);
 
-        //ACTUALIZAMOS LOS ESTADOS DEL ENVÍO 
+        //ACTUALIZAMOS LOS ESTADOS DEL ENVÍO
         if (mensaje instanceof HttpException) {
           actualizarEstadosWhatsApp([invitadoObtenido.id], idJuego, {
             estado_invitacion: "Enviado",
@@ -218,6 +216,7 @@ const actualizarEstadosWhatsApp = async (
   id_juego: number,
   estado: Prisma.Invitados_JuegosUpdateInput
 ) => {
+  console.log({ idsInvitados });
   const estadoInvitacion = await prisma.invitados_Juegos.updateMany({
     where: {
       id_juego,
