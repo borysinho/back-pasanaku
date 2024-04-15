@@ -44,7 +44,6 @@ model Invitados {
 }
 
 enum EstadoNotificacion {
-  Enviado
   EnvioCorrecto
   EnvioIncorrecto
 }
@@ -65,8 +64,8 @@ model Invitados_Juegos {
   juego    Juegos    @relation(fields: [id_juego], references: [id], onDelete: Cascade)
 
   estado_invitacion            EstadoInvitacion   @default(NoEnviado)
-  estado_notificacion_whatsapp EstadoNotificacion @default(NoEnviado)
-  estado_notificacion_correo   EstadoNotificacion @default(NoEnviado)
+  estado_notificacion_whatsapp EstadoNotificacion @default(EnvioCorrecto)
+  estado_notificacion_correo   EstadoNotificacion @default(EnvioCorrecto)
   nombre_invitado              String
   fecha                        DateTime?          @default(now())
 
