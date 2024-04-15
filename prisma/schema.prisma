@@ -44,7 +44,7 @@ model Invitados {
 }
 
 enum EstadoNotificacion {
-  NoEnviado
+  Enviado
   EnvioCorrecto
   EnvioIncorrecto
 }
