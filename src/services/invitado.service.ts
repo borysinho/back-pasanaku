@@ -52,7 +52,11 @@ export const obtenerInvitado = async (id: number) => {
 };
 
 export const obtenerInvitados = async () => {
-  const invitados = await prisma.invitados.findMany();
+  const invitados = await prisma.invitados.findMany({
+    include: {
+      invitados_juegos: {},
+    },
+  });
 
   return invitados;
 };

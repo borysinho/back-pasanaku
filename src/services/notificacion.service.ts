@@ -19,10 +19,7 @@ import {
   HttpStatusCodes400,
   HttpStatusCodes500,
 } from "../utils";
-import { stringify } from "querystring";
-import { Address } from "cluster";
 import Mail from "nodemailer/lib/mailer";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -111,7 +108,7 @@ export const notificarPorCorreo = async (
     //ACTUALIZAMOS LOS ESTADOS DEL ENVÍO DEL CORREO
     if (invitacion instanceof HttpException) {
       actualizarEstadosCorreo(id_Juego, correos, {
-        estado_invitacion: "NoEnviado",
+        estado_invitacion: "Pendiente",
         estado_notificacion_correo: "EnvioIncorrecto",
       });
     } else {
@@ -122,15 +119,19 @@ export const notificarPorCorreo = async (
         invitacion.mailResult.rejected
       );
 
-      actualizarEstadosCorreo(id_Juego, accepted, {
-        estado_invitacion: "Enviado",
-        estado_notificacion_correo: "EnvioCorrecto",
-      });
+      if (accepted) {
+        actualizarEstadosCorreo(id_Juego, accepted, {
+          estado_invitacion: "Pendiente",
+          estado_notificacion_correo: "EnvioCorrecto",
+        });
+      }
 
-      actualizarEstadosCorreo(id_Juego, rejected, {
-        estado_invitacion: "Enviado",
-        estado_notificacion_correo: "EnvioIncorrecto",
-      });
+      if (rejected) {
+        actualizarEstadosCorreo(id_Juego, rejected, {
+          estado_invitacion: "Pendiente",
+          estado_notificacion_correo: "EnvioIncorrecto",
+        });
+      }
     }
 
     return invitacion;
@@ -141,7 +142,7 @@ export const notificarPorCorreo = async (
 
 const enviarMensajeWhatsapp = async (para: string) => {
   try {
-    const qr = process.env.LINK_QR_LITTLE || "";
+    const qr = process.env.LINK_QR || "";
     const { to, status } = await client.messages.create({
       mediaUrl: [qr],
       from: `whatsapp:${de}`,
@@ -183,7 +184,7 @@ export const notificarPorWhatsapp = async (
         //ACTUALIZAMOS LOS ESTADOS DEL ENVÍO
         if (mensaje instanceof HttpException) {
           actualizarEstadosWhatsApp([invitadoObtenido.id], idJuego, {
-            estado_invitacion: "Enviado",
+            estado_invitacion: "Pendiente",
             estado_notificacion_whatsapp: "EnvioIncorrecto",
           });
           resp.push({
@@ -192,7 +193,7 @@ export const notificarPorWhatsapp = async (
           });
         } else {
           actualizarEstadosWhatsApp([invitadoObtenido.id], idJuego, {
-            estado_invitacion: "Enviado",
+            estado_invitacion: "Pendiente",
             estado_notificacion_whatsapp: "EnvioCorrecto",
           });
           resp.push(mensaje);

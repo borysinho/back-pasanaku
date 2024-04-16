@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { EstadoInvitacion, Prisma, PrismaClient } from "@prisma/client";
 
 import prisma from "./prisma.service";
 import { HttpException, HttpStatusCodes400 } from "../utils";
@@ -39,10 +39,11 @@ export const crearJuego = async (
 };
 
 export const aceptarInvitacion = async (
-  id_Juego: number,
-  id_jugador: number
+  id_juego: number,
+  id_jugador: number,
+  id_invitado: number
 ) => {
-  const juegoBuscado = await obtenerJuego(id_Juego);
+  const juegoBuscado = await obtenerJuego(id_juego);
   const jugadorBuscado = await obtenerJugador(id_jugador);
 
   if (juegoBuscado && jugadorBuscado) {
@@ -54,12 +55,26 @@ export const aceptarInvitacion = async (
           connect: { id: id_jugador },
         },
         juego: {
-          connect: { id: id_Juego },
+          connect: { id: id_juego },
         },
       },
     });
 
-    return jugadorJuego;
+    //Actualizamos el estado del juego del jugador
+
+    const invitados_juegos = prisma.invitados_Juegos.update({
+      where: {
+        id: {
+          id_juego,
+          id_invitado,
+        },
+      },
+      data: {
+        estado_invitacion: "Aceptado",
+      },
+    });
+
+    return { jugador_juego: jugadorJuego, invitado_juego: invitados_juegos };
   } else {
     let message: string = "";
     if (!jugadorBuscado)
@@ -204,18 +219,68 @@ const existeNombreJuegoEnJugador = async (
   }
 };
 
-export const obtenerInvitacionesDeJugador = async (id_jugador: number) => {
-  const juego = await prisma.juegos.findMany({
+export const obtenerJuegosConEstado = async (
+  id_jugador: number,
+  estado: EstadoInvitacion[]
+) => {
+  const juego = await prisma.jugadores.findMany({
     where: {
-      invitados_juegos: {
-        some: {
-          invitado: {
-            is: {
-              jugadores: {
-                some: {
-                  id: id_jugador,
-                },
-              },
+      id: id_jugador,
+      invitado: {
+        invitados_juegos: {
+          every: {
+            estado_invitacion: {
+              in: estado,
+            },
+            juego: {},
+          },
+        },
+      },
+    },
+
+    include: {
+      invitado: {
+        include: {
+          invitados_juegos: {
+            include: {
+              juego: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return juego;
+};
+
+export const jugadorTieneJuegoPendiente = async (
+  id_jugador: number,
+  id_juego: number
+) => {
+  const juego = await prisma.jugadores.findMany({
+    where: {
+      id: id_jugador,
+      invitado: {
+        invitados_juegos: {
+          every: {
+            estado_invitacion: {
+              equals: "Pendiente",
+            },
+            juego: {
+              id: id_juego,
+            },
+          },
+        },
+      },
+    },
+
+    include: {
+      invitado: {
+        include: {
+          invitados_juegos: {
+            include: {
+              juego: true,
             },
           },
         },

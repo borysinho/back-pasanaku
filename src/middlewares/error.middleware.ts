@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { HttpException } from "../exceptions";
 import { Prisma } from "@prisma/client";
+import { errors } from "jose";
 
 export function errorMiddleware(
   err: Error,
@@ -106,6 +107,37 @@ export function errorMiddleware(
       message,
     });
   }
+  /**
+   * Errores generales de JWT
+   */
+
+  if (
+    err instanceof errors.JOSEError
+    // (errors.JOSEAlgNotAllowed,
+    // errors.JOSEError,
+    // errors.JOSENotSupported,
+    // errors.JWEDecryptionFailed,
+    // errors.JWEInvalid,
+    // errors.JWEInvalid,
+    // errors.JWKSInvalid,
+    // errors.JWKSMultipleMatchingKeys,
+    // errors.JWKSNoMatchingKey,
+    // errors.JWKSTimeout,
+    // errors.JWSInvalid,
+    // errors.JWSSignatureVerificationFailed,
+    // errors.JWTClaimValidationFailed,
+    // errors.JWTExpired,
+    // errors.JWTInvalid)
+  ) {
+    const { code, message, name, stack } = err;
+    response.status(401).send({
+      error: true,
+      JWTError: {
+        code,
+        message,
+      },
+    });
+  }
 
   /**
    * Errores de correo
@@ -113,7 +145,7 @@ export function errorMiddleware(
 
   response.status(500).send({
     error: true,
-    message: "Algo salió mal",
+    message: err,
   });
   // }
 }

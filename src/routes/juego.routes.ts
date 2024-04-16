@@ -46,11 +46,6 @@ class JuegoRoutes {
       juegoController.crear
     );
 
-    this.router.post(
-      "jugadores/:id_jugador/juegos/:id_juego",
-      juegoController.aceptarInvitacionDeJuego
-    );
-
     this.router.put(
       "/jugadores/:id_jugador/juegos/:id_juego",
       // validarIdParam,
@@ -69,6 +64,10 @@ class JuegoRoutes {
     this.router.delete(
       "/jugadores/:id_jugador/juegos/:id_juego",
       juegoController.eliminarJuegoDeCreador
+    );
+    this.router.post(
+      "/jugadores/:id_jugador/juegos/:id_juego/invitaciones/:id_invitacion",
+      juegoController.aceptarInvitacionDeJuego
     );
   }
 }

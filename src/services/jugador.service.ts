@@ -226,6 +226,12 @@ export const obtenerCuentaCreadaDeUnInvitado = async (id_invitado: number) => {
     where: {
       id_invitado: id_invitado,
     },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      invitado: true,
+    },
   });
 
   return jugador;
@@ -244,4 +250,23 @@ export const existeUsuario = async (usuario: string) => {
   });
 
   return jugador;
+};
+
+export const validarCuenta = async ({
+  usuario,
+  contrasena,
+}: Prisma.JugadoresWhereUniqueInput) => {
+  const cuenta = await prisma.jugadores.findUnique({
+    where: {
+      usuario,
+      contrasena,
+    },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+    },
+  });
+
+  return cuenta;
 };

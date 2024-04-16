@@ -3,9 +3,6 @@ import {
   catchedAsync,
   response,
   HttpStatusCodes200,
-  HttpException,
-  httpStatusCodes,
-  HttpStatusCodes400,
 } from "../utils";
 import { Request, Response } from "express";
 import {
