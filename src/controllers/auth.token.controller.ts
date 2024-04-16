@@ -50,7 +50,7 @@ const login = async (req: Request, res: Response) => {
       .setExpirationTime("1y")
       .sign(secret);
 
-    response(res, HttpStatusCodes200.OK, { jwt });
+    response(res, HttpStatusCodes200.OK, { jwt, jugador });
   } else {
     throw new HttpException(
       HttpStatusCodes500.INTERNAL_SERVER_ERROR,
