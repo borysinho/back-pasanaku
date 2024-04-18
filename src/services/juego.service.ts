@@ -438,9 +438,16 @@ export const iniciarJuego = async (id_juego: number) => {
     },
   });
 
-  const montoAPagar = Math.trunc(
+  console.log({
+    monto_total: juegoIniciado.monto_total,
+    cant_jugadores: juegoIniciado.cant_jugadores,
+  });
+
+  const montoAPagar: number = Math.trunc(
     juegoIniciado.monto_total / juegoIniciado.cant_jugadores
   );
+
+  console.log(montoAPagar);
 
   const juego = await prisma.juegos.update({
     where: {
