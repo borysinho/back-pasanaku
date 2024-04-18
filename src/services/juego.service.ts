@@ -1,4 +1,9 @@
-import { EstadoInvitacion, Prisma, PrismaClient } from "@prisma/client";
+import {
+  EstadoInvitacion,
+  Jugadores_Juegos,
+  Prisma,
+  PrismaClient,
+} from "@prisma/client";
 
 import prisma from "./prisma.service";
 import { HttpException, HttpStatusCodes400 } from "../utils";
@@ -38,17 +43,46 @@ export const crearJuego = async (
   }
 };
 
+const buscarJugadorJuego = async (id_juego: number, id_jugador: number) => {
+  const jugador_juego = await prisma.jugadores_Juegos.findMany({
+    where: {
+      id_juego,
+      id_jugador,
+    },
+  });
+
+  return jugador_juego;
+};
+
+const buscarInvitadoJuego = async (id_juego: number, id_invitado: number) => {
+  const invitado_juego = await prisma.invitados_Juegos.findUnique({
+    where: {
+      id: {
+        id_invitado,
+        id_juego,
+      },
+    },
+  });
+
+  return invitado_juego;
+};
+
 export const aceptarInvitacion = async (
   id_juego: number,
   id_jugador: number,
   id_invitado: number
 ) => {
-  const juegoBuscado = await obtenerJuego(id_juego);
-  const jugadorBuscado = await obtenerJugador(id_jugador);
+  const existeJugadorJuego = await buscarJugadorJuego(id_juego, id_jugador);
 
-  console.log({ jugadorBuscado, juegoBuscado });
+  const existeInvitadoJuego = await buscarInvitadoJuego(id_juego, id_invitado);
 
-  if (juegoBuscado && jugadorBuscado) {
+  console.log({ existeJugadorJuego, existeInvitadoJuego });
+
+  if (
+    existeJugadorJuego.length === 0 &&
+    existeInvitadoJuego &&
+    existeInvitadoJuego.estado_invitacion === "Pendiente"
+  ) {
     const jugadorJuego = await prisma.jugadores_Juegos.create({
       data: {
         estado: "Participando",
@@ -61,9 +95,9 @@ export const aceptarInvitacion = async (
         },
       },
     });
-    console.log({ jugadorBuscado });
+    console.log({ jugadorJuego });
 
-    //Actualizamos el estado del juego del jugador
+    //Actualizamos el estado de la invitación
     const invitados_juegos = prisma.invitados_Juegos.update({
       where: {
         id: {
@@ -79,13 +113,23 @@ export const aceptarInvitacion = async (
 
     return { jugador_juego: jugadorJuego, invitado_juego: invitados_juegos };
   } else {
-    let message: string = "";
-    if (!jugadorBuscado)
-      message += `No existe un Jugador con el ID especificado.
-    `;
-    if (!juegoBuscado) message += `No existe un Juego con el ID especificado`;
+    if (existeJugadorJuego.length != 0) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "El jugador ya forma parte de este juego "
+      );
+    }
 
-    throw new HttpException(HttpStatusCodes400.BAD_REQUEST, message);
+    if (!existeInvitadoJuego) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "Se necesita que exista previamente una invitación al jugador para este juego"
+      );
+    }
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No existe una invitación pendiente de aceptación para este juego"
+    );
   }
 };
 
