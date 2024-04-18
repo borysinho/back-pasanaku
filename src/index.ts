@@ -12,12 +12,11 @@ export default class Server {
   }
 
   private config(app: Application): void {
-    // const corsOptions: CorsOptions = {
-    //   origin: "*",
-    // };
+    const corsOptions: CorsOptions = {
+      origin: process.env.ORIGIN || "http://localhost:3000",
+    };
 
-    // app.use(cors(corsOptions));
-    app.use(cors());
+    app.use(cors(corsOptions));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
   }
