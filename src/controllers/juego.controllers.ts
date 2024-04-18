@@ -3,6 +3,7 @@ import { EstadoInvitacion, Prisma } from "@prisma/client";
 import {
   actualizarJuego,
   crearJuego,
+  crearPuja,
   eliminarJuegoDeUnCreador,
   iniciarJuego,
   obtenerJuegos,
@@ -82,6 +83,18 @@ const iniciarUnJuego = async (req: Request, res: Response) => {
   response(res, HttpStatusCodes200.OK, juegoIniciado);
 };
 
+const establecerPuja = async (req: Request, res: Response) => {
+  const payLoad: Prisma.Jugador_Grupo_TurnoCreateInput = req.body;
+  const { id_jugador, id_juego, id_turno } = req.body;
+  const puja = await crearPuja(
+    parseInt(id_jugador),
+    parseInt(id_juego),
+    parseInt(id_turno),
+    payLoad
+  );
+  response(res, HttpStatusCodes200.OK, puja);
+};
+
 export default {
   crear: catchedAsync(crear),
   obtenerJuegosDeUnJugador: catchedAsync(obtenerJuegosDeUnJugador),
@@ -94,4 +107,5 @@ export default {
   ),
   eliminarJuegoDeCreador: catchedAsync(eliminarJuegoDeCreador),
   iniciarUnJuego: catchedAsync(iniciarUnJuego),
+  establecerPuja: catchedAsync(establecerPuja),
 };

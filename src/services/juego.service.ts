@@ -416,7 +416,7 @@ export const jugadorTieneJuegoPendiente = async (
 };
 
 export const iniciarJuego = async (id_juego: number) => {
-  const juego = await prisma.juegos.update({
+  const juegoIniciado = await prisma.juegos.update({
     where: {
       id: id_juego,
     },
@@ -428,7 +428,7 @@ export const iniciarJuego = async (id_juego: number) => {
   const turno = await prisma.turnos.create({
     data: {
       estado_turno: "Actual",
-      monto_minimo_puja: Math.trunc((juego.saldo_restante * 8) / 100),
+      monto_minimo_puja: Math.trunc((juegoIniciado.saldo_restante * 8) / 100),
       juego: {
         connect: { id: id_juego },
       },
@@ -436,19 +436,100 @@ export const iniciarJuego = async (id_juego: number) => {
     include: {
       juego: true,
     },
-
-    // const juego = await prisma.juegos.update({
-    //   where: {
-    //     id: id_juego
-    //   },
-    //   data: {
-    //     //
-    //     saldo_restante
-    //   }
-    // })
   });
 
-  console.log({ turno });
+  const montoAPagar = Math.trunc(
+    juegoIniciado.monto_total / juegoIniciado.cant_jugadores
+  );
 
-  return turno;
+  const juego = await prisma.juegos.update({
+    where: {
+      id: id_juego,
+    },
+    data: {
+      estado_juego: "Puja",
+      saldo_restante: {
+        decrement: montoAPagar,
+      },
+    },
+    include: {
+      turnos: true,
+    },
+  });
+  console.log({ juego });
+
+  return { juego, turno };
+};
+
+export const crearPuja = async (
+  // id_jugador_juego: number,
+  id_jugador: number,
+  id_juego: number,
+  id_turno: number,
+  payLoad: Prisma.Jugador_Grupo_TurnoCreateInput
+) => {
+  const juego = await prisma.juegos.findFirst({
+    where: {
+      id: id_juego,
+    },
+  });
+
+  const turno = await prisma.turnos.findUnique({
+    where: {
+      id: id_turno,
+    },
+  });
+
+  // TODO: Si el creador ingresa a cuenta de un jugador que incumplió los pagos, este proceso falla
+  const jugador_juego = await prisma.jugadores_Juegos.findFirst({
+    where: {
+      id_jugador,
+      id_juego,
+    },
+  });
+
+  if (
+    juego &&
+    turno &&
+    jugador_juego &&
+    payLoad.monto_puja >= turno.monto_minimo_puja
+  ) {
+    const data: Prisma.Jugador_Grupo_TurnoCreateInput = {
+      ...payLoad,
+      turno: {
+        connect: { id: id_turno },
+      },
+      jugadores_juegos: {
+        connect: { id: jugador_juego.id },
+      },
+    };
+    const jugador_grupo_turno = prisma.jugador_Grupo_Turno.create({
+      data,
+    });
+
+    return jugador_grupo_turno;
+  } else {
+    if (!juego) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No existe el juego indicado"
+      );
+    }
+    if (!turno) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No existe el turno indicado"
+      );
+    }
+    if (!jugador_juego) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No existe el jugador_juego indicado"
+      );
+    }
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      `El monto mínimo de la puja debe ser mayor al 8% del saldo del turno`
+    );
+  }
 };

@@ -10,6 +10,8 @@ datasource db {
 enum EstadoJuego {
   Nuevo
   Iniciado
+  Puja
+  EsperandoTurno
   Finalizado
 }
 
