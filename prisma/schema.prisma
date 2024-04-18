@@ -30,6 +30,7 @@ model Juegos {
   cant_jugadores    Int      @default(0)
   tiempo_puja_seg   Int      @default(120)
   lapso_turnos_dias Int      @default(30)
+  saldo_restante    Int      @default(0)
 
   jugadores_juegos Jugadores_Juegos[]
   invitados_juegos Invitados_Juegos[]
@@ -73,11 +74,10 @@ model Invitados_Juegos {
   @@id(name: "id", fields: [id_invitado, id_juego])
 }
 
-enum Periodos {
-  Semanal
-  Quincenal
-  Mensual
-  Personalizado
+enum EstadoTurnos {
+  Pasado
+  Actual
+  Futuro
 }
 
 model Turnos {
@@ -86,7 +86,9 @@ model Turnos {
   juego    Juegos @relation(fields: [id_juego], references: [id], onDelete: Cascade)
   id_juego Int
 
-  fecha_turno DateTime? @default(now())
+  estado_turno      EstadoTurnos @default(Futuro)
+  fecha_turno       DateTime?    @default(now())
+  monto_minimo_puja Int          @default(0)
 
   jugador_grupo_turno Jugador_Grupo_Turno[]
 }
@@ -118,8 +120,8 @@ enum Estado_Jugadores_Juego {
 model Jugadores_Juegos {
   id Int @id @default(autoincrement())
 
-  jugador             Jugadores              @relation(fields: [id_jugador], references: [id], onDelete: Cascade)
-  juego               Juegos                 @relation(fields: [id_juego], references: [id], onDelete: Cascade)
+  jugador             Jugadores              @relation(fields: [id_jugador], references: [id], onDelete: NoAction)
+  juego               Juegos                 @relation(fields: [id_juego], references: [id], onDelete: NoAction)
   jugador_grupo_turno Jugador_Grupo_Turno[]
   rol                 Roles                  @default(Jugador)
   estado              Estado_Jugadores_Juego @default(Participando)
@@ -131,8 +133,11 @@ model Jugadores_Juegos {
 }
 
 model Jugador_Grupo_Turno {
-  jugadores_juegos Jugadores_Juegos @relation(fields: [id_jugador_juego], references: [id], onDelete: Cascade)
-  turno            Turnos           @relation(fields: [id_turno], references: [id], onDelete: Cascade)
+  jugadores_juegos Jugadores_Juegos @relation(fields: [id_jugador_juego], references: [id], onDelete: NoAction)
+  turno            Turnos           @relation(fields: [id_turno], references: [id], onDelete: NoAction)
+
+  monto_puja Int
+  fecha      DateTime @default(now()) @db.Date
 
   id_jugador_juego Int
   id_turno         Int

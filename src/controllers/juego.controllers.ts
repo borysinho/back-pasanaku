@@ -4,6 +4,7 @@ import {
   actualizarJuego,
   crearJuego,
   eliminarJuegoDeUnCreador,
+  iniciarJuego,
   obtenerJuegos,
   obtenerJuegosConEstado,
   obtenerJuegosDeJugador,
@@ -72,6 +73,15 @@ const invitacionesPendientesDeJugador = async (req: Request, res: Response) => {
   response(res, HttpStatusCodes200.OK, invitaciones);
 };
 
+const iniciarUnJuego = async (req: Request, res: Response) => {
+  const { id_juego } = req.params;
+  console.log({ id_juego });
+
+  const juegoIniciado = await iniciarJuego(parseInt(id_juego));
+
+  response(res, HttpStatusCodes200.OK, juegoIniciado);
+};
+
 export default {
   crear: catchedAsync(crear),
   obtenerJuegosDeUnJugador: catchedAsync(obtenerJuegosDeUnJugador),
@@ -83,4 +93,5 @@ export default {
     invitacionesPendientesDeJugador
   ),
   eliminarJuegoDeCreador: catchedAsync(eliminarJuegoDeCreador),
+  iniciarUnJuego: catchedAsync(iniciarUnJuego),
 };

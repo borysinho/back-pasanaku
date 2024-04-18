@@ -34,6 +34,10 @@ class JuegoRoutes {
       "/jugadores/:id/juegos/pendientes",
       juegoController.invitacionesPendientesDeJugador
     );
+    this.router.post(
+      "/jugadores/juegos/:id_juego/iniciar",
+      juegoController.iniciarUnJuego
+    );
   }
 }
 
