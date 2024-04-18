@@ -266,6 +266,19 @@ const existeNombreJuegoEnJugador = async (
   }
 };
 
+const obtenerCreadorDeJuego = async (id_juego: number) => {
+  const creador = await prisma.jugadores.findFirst({
+    where: {
+      jugadores_juegos: {
+        some: {
+          id_juego,
+          rol: "Creador",
+        },
+      },
+    },
+  });
+};
+
 export const obtenerJuegosConEstado = async (
   id_jugador: number,
   estado: EstadoInvitacion[]
@@ -274,19 +287,18 @@ export const obtenerJuegosConEstado = async (
     where: {
       id: id_jugador,
       invitado: {
-        invitados_juegos: {
-          some: {
-            estado_invitacion: {
-              in: estado,
-            },
-          },
-        },
+        invitados_juegos: {},
       },
     },
     include: {
       invitado: {
         include: {
           invitados_juegos: {
+            where: {
+              estado_invitacion: {
+                in: estado,
+              },
+            },
             include: {
               juego: {},
             },
@@ -296,7 +308,6 @@ export const obtenerJuegosConEstado = async (
     },
   });
 
-  console.log({ jugadorJuegosEstados });
   return jugadorJuegosEstados;
 };
 
