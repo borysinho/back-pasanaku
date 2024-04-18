@@ -98,7 +98,7 @@ export const aceptarInvitacion = async (
     console.log({ jugadorJuego });
 
     //Actualizamos el estado de la invitación
-    const invitados_juegos = prisma.invitados_Juegos.update({
+    const invitados_juegos = await prisma.invitados_Juegos.update({
       where: {
         id: {
           id_juego,

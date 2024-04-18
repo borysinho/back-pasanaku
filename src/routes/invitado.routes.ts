@@ -39,6 +39,11 @@ class InvitadoRoutes {
       "/jugadores/juegos/:idjuego/invitados",
       invitadoController.invitadosJuego
     );
+
+    this.router.post(
+      "/jugadores/:id_jugador/juegos/:id_juego/invitados/:id_invitado",
+      invitadoController.aceptarInvitacionDeJuego
+    );
   }
 }
 

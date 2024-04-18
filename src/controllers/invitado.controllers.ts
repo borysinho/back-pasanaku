@@ -20,6 +20,7 @@ import {
   catchedAsync,
   response,
 } from "../utils";
+import { aceptarInvitacion } from "../services";
 
 const crear = async (req: Request, res: Response) => {
   const { idjuego } = req.params;
@@ -101,6 +102,17 @@ const validarDatosInvitado = async (
   }
 };
 
+const aceptarInvitacionDeJuego = async (req: Request, res: Response) => {
+  const { id_juego, id_jugador, id_invitado } = req.params;
+  const detalleIngreso = await aceptarInvitacion(
+    parseInt(id_juego),
+    parseInt(id_jugador),
+    parseInt(id_invitado)
+  );
+
+  response(res, HttpStatusCodes200.OK, detalleIngreso);
+};
+
 export default {
   crear: catchedAsync(crear),
   mostrarUno: catchedAsync(mostrarUno),
@@ -110,4 +122,5 @@ export default {
   invitadosJuego: catchedAsync(invitadosJuego),
   correosInvitados: catchedAsync(correosInvitados),
   validarDatosInvitado: catchedAsync(validarDatosInvitado),
+  aceptarInvitacionDeJuego: catchedAsync(aceptarInvitacionDeJuego),
 };

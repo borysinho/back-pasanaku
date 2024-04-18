@@ -39,21 +39,8 @@ const enviarCorreoYWhatsAppAInvitados = async (req: Request, res: Response) => {
   });
 };
 
-const aceptarInvitacionDeJuego = async (req: Request, res: Response) => {
-  const { id_juego, id_jugador, id_invitado } = req.params;
-  const detalleIngreso = await aceptarInvitacion(
-    parseInt(id_juego),
-    parseInt(id_jugador),
-    parseInt(id_invitado)
-  );
-
-  response(res, HttpStatusCodes200.OK, detalleIngreso);
-};
-
 export default {
   enviarCorreoYWhatsAppAInvitados: catchedAsync(
     enviarCorreoYWhatsAppAInvitados
   ),
-
-  aceptarInvitacionDeJuego: catchedAsync(aceptarInvitacionDeJuego),
 };
