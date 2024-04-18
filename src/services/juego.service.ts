@@ -119,7 +119,6 @@ export const aceptarInvitacion = async (
         "El jugador ya forma parte de este juego "
       );
     }
-
     if (!existeInvitadoJuego) {
       throw new HttpException(
         HttpStatusCodes400.BAD_REQUEST,

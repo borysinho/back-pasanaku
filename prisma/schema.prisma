@@ -24,9 +24,12 @@ model Juegos {
   estado_juego EstadoJuego @default(Nuevo)
   moneda       Moneda      @default(BS)
 
-  nombre       String
-  fecha_inicio DateTime @db.Date
-  monto_total  Int
+  nombre            String
+  fecha_inicio      DateTime @db.Date
+  monto_total       Int
+  cant_jugadores    Int      @default(0)
+  tiempo_puja_seg   Int      @default(120)
+  lapso_turnos_dias Int      @default(30)
 
   jugadores_juegos Jugadores_Juegos[]
   invitados_juegos Invitados_Juegos[]
@@ -64,6 +67,7 @@ model Invitados_Juegos {
   estado_notificacion_whatsapp EstadoNotificacion @default(EnvioIncorrecto)
   estado_notificacion_correo   EstadoNotificacion @default(EnvioIncorrecto)
   nombre_invitado              String
+  periodo                      String             @default("Mensual")
   fecha                        DateTime?          @default(now())
 
   @@id(name: "id", fields: [id_invitado, id_juego])
