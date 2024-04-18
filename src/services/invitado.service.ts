@@ -62,15 +62,19 @@ export const obtenerInvitados = async () => {
 };
 
 export const obtenerInvitadosDeJuego = async (id_juego: number) => {
-  const invitados = await prisma.invitados.findMany({
+  const invitados = await prisma.juegos.findMany({
     where: {
+      id: id_juego,
+    },
+    include: {
       invitados_juegos: {
-        some: {
-          id_juego,
+        include: {
+          invitado: true,
         },
       },
     },
   });
+
   return invitados;
 };
 

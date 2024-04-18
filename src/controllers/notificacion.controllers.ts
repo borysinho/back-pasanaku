@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import {
   notificarPorCorreo,
@@ -10,23 +9,16 @@ import {
   catchedAsync,
   response,
 } from "../utils";
-import { body } from "express-validator";
+import { EstadoInvitacion } from "@prisma/client";
+import { aceptarInvitacion, obtenerJuegosConEstado } from "../services";
 
 const enviarCorreo = async (id_juego: number, idsInvitados: []) => {
   const mensajesCorreo = await notificarPorCorreo(idsInvitados, id_juego);
 
   if (mensajesCorreo instanceof HttpException) {
-    console.log(mensajesCorreo.getAttr());
-
     return { mailResult: mensajesCorreo.getAttr() };
-    // response(res, HttpStatusCodes200.OK, {
-    //   mailResult: mensajesCorreo.getAttr(),
-    // });
   } else {
     return mensajesCorreo;
-    // response(res, HttpStatusCodes200.OK, {
-    //   mailResult: mensajesCorreo,
-    // });
   }
 };
 
@@ -35,20 +27,6 @@ const enviarCorreoYWhatsAppAInvitados = async (req: Request, res: Response) => {
   const { idsInvitados } = req.body;
   const { id } = req.params;
   const mensajesCorreo = await enviarCorreo(parseInt(id), idsInvitados);
-
-  // const mensajesCorreo = await notificarPorCorreo(idsInvitados, parseInt(id));
-
-  // if (mensajesCorreo instanceof HttpException) {
-  //   console.log(mensajesCorreo.getAttr());
-
-  //   response(res, HttpStatusCodes200.OK, {
-  //     mailResult: mensajesCorreo.getAttr(),
-  //   });
-  // } else {
-  //   response(res, HttpStatusCodes200.OK, {
-  //     mailResult: mensajesCorreo,
-  //   });
-  // }
 
   const mensajesWhatsapp = await notificarPorWhatsapp(
     parseInt(id),
@@ -59,23 +37,23 @@ const enviarCorreoYWhatsAppAInvitados = async (req: Request, res: Response) => {
     mensajesCorreo,
     mensajesWhatsapp,
   });
-  // console.log({ mensajesWhatsapp });
-  // return res.status(201).json({
-  // message: "Registro agregado correctamente",
-  // data: [mensajesWhatsapp],
-  // data: [mensajesWhatsapp, mensajesCorreo],
-  // data: [mensajesCorreo],
-  // });
-  // } catch (error: any) {
-  //   return res.status(402).json({
-  //     message: "Error en notificaciones.controller.notificaciones",
-  //     error: error.message,
-  //   });
-  // }
+};
+
+const aceptarInvitacionDeJuego = async (req: Request, res: Response) => {
+  const { id_juego, id_jugador, id_invitado } = req.params;
+  const detalleIngreso = await aceptarInvitacion(
+    parseInt(id_juego),
+    parseInt(id_jugador),
+    parseInt(id_invitado)
+  );
+
+  response(res, HttpStatusCodes200.OK, detalleIngreso);
 };
 
 export default {
   enviarCorreoYWhatsAppAInvitados: catchedAsync(
     enviarCorreoYWhatsAppAInvitados
   ),
+
+  aceptarInvitacionDeJuego: catchedAsync(aceptarInvitacionDeJuego),
 };

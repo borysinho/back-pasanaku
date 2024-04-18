@@ -13,7 +13,7 @@ export default class Server {
 
   private config(app: Application): void {
     const corsOptions: CorsOptions = {
-      origin: `http://localhost:${process.env.WS_PORT || 3000}`,
+      origin: "*",
     };
 
     app.use(cors(corsOptions));

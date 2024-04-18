@@ -46,6 +46,8 @@ export const aceptarInvitacion = async (
   const juegoBuscado = await obtenerJuego(id_juego);
   const jugadorBuscado = await obtenerJugador(id_jugador);
 
+  console.log({ jugadorBuscado, juegoBuscado });
+
   if (juegoBuscado && jugadorBuscado) {
     const jugadorJuego = await prisma.jugadores_Juegos.create({
       data: {
@@ -59,9 +61,9 @@ export const aceptarInvitacion = async (
         },
       },
     });
+    console.log({ jugadorBuscado });
 
     //Actualizamos el estado del juego del jugador
-
     const invitados_juegos = prisma.invitados_Juegos.update({
       where: {
         id: {
@@ -73,12 +75,14 @@ export const aceptarInvitacion = async (
         estado_invitacion: "Aceptado",
       },
     });
+    console.log({ invitados_juegos });
 
     return { jugador_juego: jugadorJuego, invitado_juego: invitados_juegos };
   } else {
     let message: string = "";
     if (!jugadorBuscado)
-      message += `No existe un Jugador con el ID especificado`;
+      message += `No existe un Jugador con el ID especificado.
+    `;
     if (!juegoBuscado) message += `No existe un Juego con el ID especificado`;
 
     throw new HttpException(HttpStatusCodes400.BAD_REQUEST, message);
@@ -223,27 +227,25 @@ export const obtenerJuegosConEstado = async (
   id_jugador: number,
   estado: EstadoInvitacion[]
 ) => {
-  const juego = await prisma.jugadores.findMany({
+  const jugadorJuegosEstados = await prisma.jugadores.findMany({
     where: {
       id: id_jugador,
       invitado: {
         invitados_juegos: {
-          every: {
+          some: {
             estado_invitacion: {
               in: estado,
             },
-            juego: {},
           },
         },
       },
     },
-
     include: {
       invitado: {
         include: {
           invitados_juegos: {
             include: {
-              juego: true,
+              juego: {},
             },
           },
         },
@@ -251,7 +253,8 @@ export const obtenerJuegosConEstado = async (
     },
   });
 
-  return juego;
+  console.log({ jugadorJuegosEstados });
+  return jugadorJuegosEstados;
 };
 
 export const jugadorTieneJuegoPendiente = async (

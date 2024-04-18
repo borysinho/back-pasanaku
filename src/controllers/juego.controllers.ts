@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 import { EstadoInvitacion, Prisma } from "@prisma/client";
 import {
-  aceptarInvitacion,
   actualizarJuego,
   crearJuego,
   eliminarJuegoDeUnCreador,
-  obtenerJuegosConEstado,
   obtenerJuegos,
+  obtenerJuegosConEstado,
   obtenerJuegosDeJugador,
 } from "../services/juego.service";
 import { HttpStatusCodes200, catchedAsync, response } from "../utils";
@@ -54,37 +53,6 @@ const actualizarJuegoDeCreador = async (req: Request, res: Response) => {
   response(res, HttpStatusCodes200.OK, juego);
 };
 
-const aceptarInvitacionDeJuego = async (req: Request, res: Response) => {
-  const { id_juego, id_jugador, id_invitado } = req.params;
-  const detalleIngreso = await aceptarInvitacion(
-    parseInt(id_juego),
-    parseInt(id_jugador),
-    parseInt(id_invitado)
-  );
-
-  response(res, HttpStatusCodes200.OK, detalleIngreso);
-};
-
-const invitacionesDeJugador = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  // const { EstadoInvitacion } = req.body;
-  // console.log({ EstadoInvitacion });
-  // const estadoInvitacion: EstadoInvitacion[] = [
-  //   "Aceptado",
-  //   "Cancelado",
-  //   "Pendiente",
-  //   "Rechazado",
-  // ];
-
-  const estadoInvitacion: EstadoInvitacion[] = req.body.EstadoInvitacion;
-  const invitaciones = await obtenerJuegosConEstado(
-    parseInt(id),
-    estadoInvitacion
-  );
-
-  response(res, HttpStatusCodes200.OK, invitaciones);
-};
-
 const eliminarJuegoDeCreador = async (req: Request, res: Response) => {
   const { id_jugador, id_juego } = req.params;
   const juego = await eliminarJuegoDeUnCreador(
@@ -95,7 +63,14 @@ const eliminarJuegoDeCreador = async (req: Request, res: Response) => {
   response(res, HttpStatusCodes200.OK, juego);
 };
 
-const aceptarJuego = async (req: Request, res: Response) => {};
+const invitacionesPendientesDeJugador = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const invitaciones = await obtenerJuegosConEstado(parseInt(id), [
+    EstadoInvitacion.Pendiente,
+  ]);
+
+  response(res, HttpStatusCodes200.OK, invitaciones);
+};
 
 export default {
   crear: catchedAsync(crear),
@@ -104,7 +79,8 @@ export default {
     obtenerJuegosDeTodosLosJugadores
   ),
   actualizarJuegoDeCreador: catchedAsync(actualizarJuegoDeCreador),
-  aceptarInvitacionDeJuego: catchedAsync(aceptarInvitacionDeJuego),
-  invitacionesDeJugador: catchedAsync(invitacionesDeJugador),
+  invitacionesPendientesDeJugador: catchedAsync(
+    invitacionesPendientesDeJugador
+  ),
   eliminarJuegoDeCreador: catchedAsync(eliminarJuegoDeCreador),
 };
