@@ -84,8 +84,11 @@ const iniciarUnJuego = async (req: Request, res: Response) => {
 };
 
 const establecerPuja = async (req: Request, res: Response) => {
+  console.log({ body: req.body });
   const payLoad: Prisma.Jugador_Grupo_TurnoCreateInput = req.body;
-  const { id_jugador, id_juego, id_turno } = req.body;
+  console.log({ payLoad });
+  const { id_jugador, id_juego, id_turno } = req.params;
+
   const puja = await crearPuja(
     parseInt(id_jugador),
     parseInt(id_juego),

@@ -475,6 +475,7 @@ export const crearPuja = async (
   id_turno: number,
   payLoad: Prisma.Jugador_Grupo_TurnoCreateInput
 ) => {
+  console.log({ id_jugador, id_juego, id_turno });
   const juego = await prisma.juegos.findFirst({
     where: {
       id: id_juego,
