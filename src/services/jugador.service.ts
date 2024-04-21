@@ -36,7 +36,7 @@ export const crearJugadorSinSerInvitado = async (
 
 // export const crearJugadorRelacionandoAInvitado = async (
 export const crearJugadorAPartirDeInvitacion = async (
-  { nombre, usuario, contrasena }: Prisma.JugadoresCreateInput,
+  { nombre, usuario, contrasena, client_token }: Prisma.JugadoresCreateInput,
   { telf, correo }: Prisma.InvitadosCreateInput
 ) => {
   const invitadoBuscado = await buscarInvitado(correo, telf);
@@ -47,6 +47,7 @@ export const crearJugadorAPartirDeInvitacion = async (
         nombre,
         usuario,
         contrasena,
+        client_token,
         invitado: {
           connect: {
             correo,
@@ -266,8 +267,40 @@ export const validarCuenta = async ({
       id: true,
       nombre: true,
       usuario: true,
+      client_token: true,
     },
   });
 
   return cuenta;
+};
+
+export const obtenerJugadoresDeJuego = async (id_juego: number) => {
+  const jugadores = await prisma.jugadores.findMany({
+    where: {
+      jugadores_juegos: {
+        some: {
+          id_juego,
+        },
+      },
+    },
+  });
+
+  console.log({ jugadores });
+  return jugadores;
+};
+
+export const actualizarTokenFireBase = async (
+  id_jugador: number,
+  client_token: string
+) => {
+  const jugador = prisma.jugadores.update({
+    where: {
+      id: id_jugador,
+    },
+    data: {
+      client_token,
+    },
+  });
+
+  return jugador;
 };

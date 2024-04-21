@@ -9,7 +9,7 @@ import {} from "firebase-admin";
 import nodemailer from "nodemailer";
 import { templateWhatsApp } from "../templates/whatsapp.template";
 import { templateEMail } from "../templates/email.template";
-import { Prisma } from "@prisma/client";
+import { Jugadores, Prisma } from "@prisma/client";
 import { obtenerJuego } from "./juego.service";
 import { HttpException } from "../exceptions";
 import {
@@ -17,15 +17,21 @@ import {
   obtenerInvitado,
   obtenerTelefonosInvitados,
 } from "./invitado.service";
-import { HttpStatusCodes400, HttpStatusCodes500 } from "../utils";
+import {
+  HttpStatusCodes400,
+  HttpStatusCodes500,
+  calcularFinDeOfertas,
+  formatearTiempo,
+} from "../utils";
 import Mail from "nodemailer/lib/mailer";
-import { assert } from "console";
+
+import { defaultInicioOfertas } from "../utils";
+import { obtenerJugadores, obtenerJugadoresDeJuego } from "./jugador.service";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const de = process.env.TWILIO_FROM_NUMBER;
 const client = new Twilio(accountSid, authToken);
-
 const correo_de = process.env.CORREO_DIR;
 const correo_pass = process.env.CORREO_PASS;
 
@@ -323,41 +329,53 @@ function sendFcmMessage(fcmMessage: Object) {
   });
 }
 
-export const enviarNotificacionPush = async (token: string) => {
-  const message = {
-    message: {
-      token: token,
-      notification: {
-        title: "Título de la notificación",
-        body: "Cuerpo del mensaje de la notificación",
-      },
-      data: {
-        event: "inicio-ofertas",
-      },
-      android: {
-        priority: "high",
-      },
-    },
-  };
-  const res = sendFcmMessage(message);
+export const notificarInicioOfertas = async (id_juego: number) => {
+  const juego = await obtenerJuego(id_juego);
+  const jugadores: Jugadores[] = await obtenerJugadoresDeJuego(id_juego);
+  let resp: { jugador: string; enviado: boolean; mensaje?: string }[] = [];
 
-  return res;
-  // const data = require(`../../${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
-  // console.log({
-  //   GOOGLE_APPLICATION_CREDENTIALS: data,
-  // });
-  // const response = await fetch(url, {
-  //   method: "POST",
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //     Authorization: `Bearer ${data.}`,
-  //   },
-  //   body: JSON.stringify(message),
-  // });
-  // if (response.ok) {
-  //   console.log("Notificación enviada exitosamente");
-  // } else {
-  //   console.error("Error al enviar la notificación:");
-  // }
-  // return await response.text();
+  if (juego && jugadores.length > 0) {
+    const fecha_fin = calcularFinDeOfertas(
+      juego.fecha_inicio_puja,
+      juego.tiempo_puja_seg
+    );
+
+    jugadores.forEach((jugador) => {
+      if (jugador.client_token != "") {
+        const message = defaultInicioOfertas(
+          jugador.client_token,
+          juego.nombre,
+          juego.id,
+          fecha_fin,
+          juego.tiempo_puja_seg
+        );
+
+        sendFcmMessage(message);
+        resp.push({
+          jugador: jugador.nombre,
+          enviado: true,
+        });
+      } else {
+        resp.push({
+          jugador: jugador.nombre,
+          enviado: false,
+          mensaje: "No se encontró un token de notificaciones para el jugador",
+        });
+      }
+    });
+
+    return resp;
+  } else {
+    if (!juego) {
+      throw new HttpException(
+        HttpStatusCodes400.NOT_FOUND,
+        "No se encuentra el juego especificado"
+      );
+    }
+
+    throw new HttpException(
+      HttpStatusCodes400.NOT_FOUND,
+      "No se encontraron jugadores que se hayan unido al juego"
+    );
+  }
 };

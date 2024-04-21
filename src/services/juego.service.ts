@@ -234,23 +234,6 @@ export const actualizarJuego = async (
   }
 };
 
-// export const eliminarJuegoDeJugador = async (
-//   id_jugador: number,
-//   id_juego: number
-// ) => {
-//   const jugador_juego = await prisma.jugadores_Juegos.delete({
-//     where: {
-//       id_jugador,
-//       id_juego
-//     },
-//     include: {
-//       invitados_juegos: true,
-//       jugadores_juegos: true,
-//     },
-//   });
-
-//   return jugador_juego;
-// };
 export const eliminarJuegoDeUnCreador = async (
   id_jugador: number,
   id_juego: number
@@ -424,6 +407,13 @@ export const iniciarJuego = async (id_juego: number) => {
     data: {
       estado_juego: "Iniciado",
     },
+    select: {
+      nombre: true,
+      estado_juego: true,
+      saldo_restante: true,
+      monto_total: true,
+      cant_jugadores: true,
+    },
   });
 
   const turno = await prisma.turnos.create({
@@ -466,7 +456,7 @@ export const iniciarJuego = async (id_juego: number) => {
   });
   console.log({ juego });
 
-  return { juego, turno };
+  return juego;
 };
 
 export const crearPuja = async (

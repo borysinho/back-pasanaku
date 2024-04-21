@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Juegos" ADD COLUMN     "fecha_inicio_puja" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

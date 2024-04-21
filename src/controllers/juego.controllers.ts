@@ -10,8 +10,9 @@ import {
   obtenerJuegosConEstado,
   obtenerJuegosDeJugador,
 } from "../services/juego.service";
-import { HttpStatusCodes200, response } from "../utils";
-import { catchedAsync } from "../exceptions";
+import { HttpStatusCodes200, HttpStatusCodes400, response } from "../utils";
+import { HttpException, catchedAsync } from "../exceptions";
+import { notificarInicioOfertas } from "../services";
 
 const crear = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -77,11 +78,18 @@ const invitacionesPendientesDeJugador = async (req: Request, res: Response) => {
 
 const iniciarUnJuego = async (req: Request, res: Response) => {
   const { id_juego } = req.params;
-  console.log({ id_juego });
 
-  const juegoIniciado = await iniciarJuego(parseInt(id_juego));
+  if (id_juego) {
+    const juego = await iniciarJuego(parseInt(id_juego));
+    const notificaciones = await notificarInicioOfertas(parseInt(id_juego));
 
-  response(res, HttpStatusCodes200.OK, juegoIniciado);
+    response(res, HttpStatusCodes200.OK, { juego, notificaciones });
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.NOT_FOUND,
+      "Se esperaba el id del juego"
+    );
+  }
 };
 
 const establecerPuja = async (req: Request, res: Response) => {

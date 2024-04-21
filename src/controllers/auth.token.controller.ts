@@ -6,25 +6,31 @@ import {
   response,
 } from "../utils";
 import { catchedAsync, HttpException } from "../exceptions";
-import { validarCuenta } from "../services";
+import { actualizarTokenFireBase, validarCuenta } from "../services";
 //
 import { SignJWT, jwtVerify } from "jose";
-import { Prisma } from "@prisma/client";
 
 const login = async (req: Request, res: Response) => {
   console.log(req.body);
-  const { usuario, contrasena } = req.body;
+  const { usuario, contrasena, firebase_token } = req.body;
 
-  if (!usuario || !contrasena)
+  if (!usuario || !contrasena || !firebase_token)
     throw new HttpException(
       HttpStatusCodes400.UNAUTHORIZED,
-      "Se deben proporcionar los datos correo y password"
+      "Se deben proporcionar los datos correo, contraseña y Token de cliente"
     );
 
   // Validamos que el usuario y la contraseña coincidan
   const jugador = await validarCuenta({ usuario, contrasena });
 
   if (jugador) {
+    // Actualizamos el token de FireBase
+
+    const jugadorTokenActualizado = actualizarTokenFireBase(
+      jugador.id,
+      jugador.client_token
+    );
+
     //Generamos un token y lo devolvemos.
 
     //Enviamos el payLoad, la información que va a tener ese Token

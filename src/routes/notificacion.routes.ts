@@ -15,8 +15,8 @@ class JugadorRoutes {
     );
 
     this.router.post(
-      "/jugadores/juegos/:id/notificaciones/testpush",
-      notificacionesController.testPush
+      "/jugadores/juegos/:id_juego/notificaciones/testpush",
+      notificacionesController.inicioDeOfertas
     );
   }
 }
