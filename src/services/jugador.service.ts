@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
-import { HttpException, HttpStatusCodes400 } from "../utils";
+import { HttpException } from "../exceptions";
+import { HttpStatusCodes400 } from "../utils";
 import { buscarInvitado } from "./invitado.service";
 
 // const prisma = new PrismaClient();

@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 import {
-  HttpException,
   HttpStatusCodes200,
   HttpStatusCodes400,
   HttpStatusCodes500,
-  catchedAsync,
   response,
 } from "../utils";
+import { catchedAsync, HttpException } from "../exceptions";
 import { validarCuenta } from "../services";
 //
 import { SignJWT, jwtVerify } from "jose";

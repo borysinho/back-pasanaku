@@ -10,7 +10,8 @@ import {
   obtenerJuegosConEstado,
   obtenerJuegosDeJugador,
 } from "../services/juego.service";
-import { HttpStatusCodes200, catchedAsync, response } from "../utils";
+import { HttpStatusCodes200, response } from "../utils";
+import { catchedAsync } from "../exceptions";
 
 const crear = async (req: Request, res: Response) => {
   const { id } = req.params;

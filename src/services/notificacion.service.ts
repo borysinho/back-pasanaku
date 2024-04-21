@@ -1,25 +1,25 @@
 // Download the helper library from https://www.twilio.com/docs/node/install
 // Find your Account SID and Auth Token at twilio.com/console
 // and set the environment variables. See http://twil.io/secure
-
+import https from "https";
+import { google } from "googleapis";
 import { Twilio } from "twilio";
 import prisma from "./prisma.service";
+import {} from "firebase-admin";
 import nodemailer from "nodemailer";
 import { templateWhatsApp } from "../templates/whatsapp.template";
 import { templateEMail } from "../templates/email.template";
 import { Prisma } from "@prisma/client";
 import { obtenerJuego } from "./juego.service";
+import { HttpException } from "../exceptions";
 import {
   obtenerCorreosInvitados,
   obtenerInvitado,
   obtenerTelefonosInvitados,
 } from "./invitado.service";
-import {
-  HttpException,
-  HttpStatusCodes400,
-  HttpStatusCodes500,
-} from "../utils";
+import { HttpStatusCodes400, HttpStatusCodes500 } from "../utils";
 import Mail from "nodemailer/lib/mailer";
+import { assert } from "console";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -253,4 +253,111 @@ const actualizarEstadosCorreo = async (
 
   console.log({ invitados_juegos });
   return invitados_juegos;
+};
+
+export const inicioDeOfertas = async (id_juego: number) => {
+  const message = {
+    notification: {
+      title: "Titulo",
+      body: "Cuerpo",
+    },
+  };
+};
+
+const keys_path: string = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+const PROJECT_ID = process.env.FB_PROJECT_ID;
+const HOST = "fcm.googleapis.com";
+const PATH = "/v1/projects/" + PROJECT_ID + "/messages:send";
+const MESSAGING_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
+const SCOPES = [MESSAGING_SCOPE];
+
+function getAccessToken() {
+  return new Promise(function (resolve, reject) {
+    const key = require(keys_path);
+    const jwtClient = new google.auth.JWT(
+      key.client_email,
+      keys_path,
+      key.private_key,
+      SCOPES,
+      key.client_email
+    );
+
+    jwtClient.authorize((err, tokens) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(tokens?.access_token);
+    });
+  });
+}
+
+function sendFcmMessage(fcmMessage: Object) {
+  getAccessToken().then(function (accessToken) {
+    const options = {
+      hostname: HOST,
+      path: PATH,
+      method: "POST",
+      // [START use_access_token]
+      headers: {
+        Authorization: "Bearer " + accessToken,
+      },
+      // [END use_access_token]
+    };
+
+    const request = https.request(options, function (resp) {
+      resp.setEncoding("utf8");
+      resp.on("data", function (data) {
+        console.log("Message sent to Firebase for delivery, response:");
+        console.log(data);
+      });
+    });
+
+    request.on("error", function (err) {
+      console.log("Unable to send message to Firebase");
+      console.log(err);
+    });
+
+    request.write(JSON.stringify(fcmMessage));
+    request.end();
+  });
+}
+
+export const enviarNotificacionPush = async (token: string) => {
+  const message = {
+    message: {
+      token: token,
+      notification: {
+        title: "Título de la notificación",
+        body: "Cuerpo del mensaje de la notificación",
+      },
+      data: {
+        event: "inicio-ofertas",
+      },
+      android: {
+        priority: "high",
+      },
+    },
+  };
+  const res = sendFcmMessage(message);
+
+  return res;
+  // const data = require(`../../${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
+  // console.log({
+  //   GOOGLE_APPLICATION_CREDENTIALS: data,
+  // });
+  // const response = await fetch(url, {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //     Authorization: `Bearer ${data.}`,
+  //   },
+  //   body: JSON.stringify(message),
+  // });
+  // if (response.ok) {
+  //   console.log("Notificación enviada exitosamente");
+  // } else {
+  //   console.error("Error al enviar la notificación:");
+  // }
+  // return await response.text();
 };

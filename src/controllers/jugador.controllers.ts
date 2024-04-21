@@ -1,9 +1,6 @@
 import { Query } from "express-serve-static-core";
-import {
-  catchedAsync,
-  response,
-  HttpStatusCodes200,
-} from "../utils";
+import { catchedAsync } from "../exceptions";
+import { response, HttpStatusCodes200 } from "../utils";
 import { Request, Response } from "express";
 import {
   actualizarJugador,

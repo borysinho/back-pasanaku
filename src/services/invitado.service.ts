@@ -1,7 +1,8 @@
 import { Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
 import { obtenerJuego } from "./juego.service";
-import { HttpException, HttpStatusCodes400 } from "../utils";
+import { HttpStatusCodes400 } from "../utils";
+import { HttpException } from "../exceptions";
 
 export const crearInvitado = async (
   id: number,

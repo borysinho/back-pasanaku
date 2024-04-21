@@ -6,7 +6,8 @@ import {
 } from "@prisma/client";
 
 import prisma from "./prisma.service";
-import { HttpException, HttpStatusCodes400 } from "../utils";
+import { HttpStatusCodes400 } from "../utils";
+import { HttpException } from "../exceptions";
 import { existeId, obtenerJugador } from "./jugador.service";
 
 const existeNombreJuegoEnJugador = async (

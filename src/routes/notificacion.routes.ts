@@ -13,6 +13,11 @@ class JugadorRoutes {
       "/jugadores/juegos/:id/notificaciones",
       notificacionesController.enviarCorreoYWhatsAppAInvitados
     );
+
+    this.router.post(
+      "/jugadores/juegos/:id/notificaciones/testpush",
+      notificacionesController.testPush
+    );
   }
 }
 
