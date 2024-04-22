@@ -28,7 +28,7 @@ const login = async (req: Request, res: Response) => {
 
     const jugadorTokenActualizado = actualizarTokenFireBase(
       jugador.id,
-      jugador.client_token
+      firebase_token
     );
 
     //Generamos un token y lo devolvemos.
