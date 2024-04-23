@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { catchedAsync, HttpException } from "../exceptions";
 import {
+  notificarGanadorDeTurno,
   notificarInicioOfertas,
   notificarPorCorreo,
   notificarPorWhatsapp,
@@ -53,9 +54,24 @@ const inicioDeOfertas = async (req: Request, res: Response) => {
   // );
 };
 
+const finDeOfertas = async (req: Request, res: Response) => {
+  const { id_juego } = req.params;
+  const ganador = notificarGanadorDeTurno(parseInt(id_juego));
+  response(res, HttpStatusCodes200.OK, ganador);
+};
+
+const testNotificarGanador = async (req: Request, res: Response) => {
+  const { id_juego } = req.params;
+
+  const ganador = await notificarGanadorDeTurno(parseInt(id_juego));
+  response(res, 200, ganador);
+};
+
 export default {
   enviarCorreoYWhatsAppAInvitados: catchedAsync(
     enviarCorreoYWhatsAppAInvitados
   ),
   inicioDeOfertas: catchedAsync(inicioDeOfertas),
+  finDeOfertas: catchedAsync(finDeOfertas),
+  testNotificarGanador: catchedAsync(testNotificarGanador),
 };

@@ -1,4 +1,4 @@
-import { calcularFinDeOfertas, formatearTiempo } from "./fechas.utils";
+import { formatearTiempo } from "./fechas.utils";
 
 type TFBNotification = {
   title?: string;
@@ -6,7 +6,7 @@ type TFBNotification = {
   image?: string;
 };
 
-type TFBMessage = {
+export type TFBMessage = {
   token?: string;
 
   notification: TFBNotification;
@@ -45,15 +45,29 @@ export const defaultInicioOfertas = (
   return { message };
 };
 
-// export const defaultInicioOfertas: TFBMessage = {
-//   message: {
-//     notification: {
-//       title: "Tiempo de ofertas",
-//       body: "¡El tiempo de ofertas ha iniciado!",
-//     },
+export const defaultFinOfertas = (
+  token: string,
+  id_juego: number,
+  id_jugador_ganador: number,
+  nombre_juego: string,
+  // fecha_fin: Date,
+  nombre_ganador: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: "Fin de ofertas",
+      body: `El ganador del turno del juego ${nombre_juego} ha sido ${nombre_ganador}. ¡Felicidades!`,
+    },
+    data: {
+      event: "fin-ofertas",
+      id_juego: id_juego.toString(),
+      id_jugador_ganador: id_jugador_ganador.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
 
-//     data: {
-//       event: "inicio-ofertas",
-//     },
-//   },
-// };
+  return { message };
+};

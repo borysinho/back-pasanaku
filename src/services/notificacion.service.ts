@@ -9,7 +9,7 @@ import {} from "firebase-admin";
 import nodemailer from "nodemailer";
 import { templateWhatsApp } from "../templates/whatsapp.template";
 import { templateEMail } from "../templates/email.template";
-import { Jugadores, Prisma } from "@prisma/client";
+import { Jugadores, Jugadores_Juegos, Prisma } from "@prisma/client";
 import { obtenerJuego } from "./juego.service";
 import { HttpException } from "../exceptions";
 import {
@@ -20,13 +20,18 @@ import {
 import {
   HttpStatusCodes400,
   HttpStatusCodes500,
-  calcularFinDeOfertas,
+  sumarSegundosAFecha,
   formatearTiempo,
+  defaultFinOfertas,
 } from "../utils";
 import Mail from "nodemailer/lib/mailer";
 
 import { defaultInicioOfertas } from "../utils";
-import { obtenerJugadores, obtenerJugadoresDeJuego } from "./jugador.service";
+import {
+  obtenerJugador,
+  obtenerJugadores,
+  obtenerJugadoresDeJuego,
+} from "./jugador.service";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -335,7 +340,7 @@ export const notificarInicioOfertas = async (id_juego: number) => {
   let resp: { jugador: string; enviado: boolean; mensaje?: string }[] = [];
 
   if (juego && jugadores.length > 0) {
-    const fecha_fin = calcularFinDeOfertas(
+    const fecha_fin = sumarSegundosAFecha(
       juego.fecha_inicio_puja,
       juego.tiempo_puja_seg
     );
@@ -377,5 +382,136 @@ export const notificarInicioOfertas = async (id_juego: number) => {
       HttpStatusCodes400.NOT_FOUND,
       "No se encontraron jugadores que se hayan unido al juego"
     );
+  }
+};
+
+const actualizarGanadorDeTurno = async (
+  id_turno: number,
+  id_jugador_juego: number
+) => {
+  const turno = await prisma.turnos.update({
+    where: {
+      id: id_turno,
+    },
+    data: {
+      // id_ganador_jugador_grupo_turno: id_jugador_juego,
+      id_ganador_jugador_juego: id_jugador_juego,
+    },
+  });
+
+  return turno;
+};
+
+const participantesDeJuego = async (id_juego: number) => {
+  const jugador_juego = await prisma.jugadores_Juegos.findMany({
+    where: {
+      id_juego,
+    },
+  });
+
+  return jugador_juego;
+};
+
+export const notificarGanadorDeTurno = async (id_juego: number) => {
+  // Obtenemos el turno que se está jugando en el momento
+
+  console.log("Proceso: Notificar ganador de juego");
+  const turno = await prisma.turnos.findMany({
+    where: {
+      id_juego,
+      estado_turno: "Actual",
+    },
+  });
+
+  const juego = await obtenerJuego(id_juego);
+
+  if (turno.length === 1) {
+    // Hay un turno que está en juego con estado "Actual"
+    const id_turno = turno[0].id;
+
+    // Obtenemos la primera de todas las pujas ordenado de mayor a menor
+    const jugador_grupo_turno = await prisma.jugador_Grupo_Turno.findFirst({
+      where: {
+        id_turno,
+      },
+      orderBy: {
+        monto_puja: "desc",
+      },
+    });
+
+    // Obtenemos los participantes
+    const jugador_juego = await participantesDeJuego(id_juego);
+
+    let jugador_juego_ganador: Jugadores_Juegos;
+    // Preguntamos si no hubo pujas
+    if (jugador_grupo_turno === null) {
+      // No hubo ganador, seleccionamos un ganador entre los participantes
+
+      //Obtenemos un número randómico entre los participantes
+      const getRandomInt = (max: number) => {
+        return Math.floor(Math.random() * max);
+      };
+
+      // Obtenemos el ganador
+      jugador_juego_ganador =
+        jugador_juego[getRandomInt(jugador_juego.length - 1)];
+    } else {
+      // Hubo al menos alguien que ofertó y el ganador es el primero de la lista jugador_grupo_turno
+      // jugador_juego_ganador = jugador_grupo_turno[0].;
+      jugador_juego_ganador = await prisma.jugadores_Juegos.findUniqueOrThrow({
+        where: {
+          id: jugador_grupo_turno.id_jugador_juego,
+        },
+      });
+    }
+
+    const jugador_ganador = await obtenerJugador(
+      jugador_juego_ganador.id_jugador
+    );
+
+    //Actualizamos el ganador del turno
+    const turno_ganador = await actualizarGanadorDeTurno(
+      id_turno,
+      jugador_juego_ganador.id
+    );
+
+    // Actualizamos el estado del turno
+    const turno_actualizado = await prisma.turnos.update({
+      where: {
+        id: id_turno,
+      },
+      data: {
+        estado_turno: "Pasado",
+      },
+    });
+
+    // Obtenemos los participantes del juego
+    const participantes = await participantesDeJuego(id_juego);
+
+    // Recorremos todos los participantes del juego para notificarlos
+    participantes.forEach(async (element) => {
+      const jugador = await prisma.jugadores.findUniqueOrThrow({
+        where: {
+          id: element.id_jugador,
+        },
+      });
+
+      // Si tienen un token para notificaciones las enviamos
+      if (jugador.client_token) {
+        const message = defaultFinOfertas(
+          jugador.client_token,
+          id_juego,
+          jugador_juego_ganador.id,
+          juego.nombre,
+          jugador_ganador.nombre
+        );
+        //Aqui notificamos
+        console.log({ EnviandoNotificacion: message });
+        sendFcmMessage(message);
+      }
+    });
+
+    console.log({ jugador_grupo_turno });
+    return jugador_grupo_turno;
   }
 };

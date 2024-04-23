@@ -86,8 +86,11 @@ enum EstadoTurnos {
 model Turnos {
   id Int @id @default(autoincrement())
 
-  juego    Juegos @relation(fields: [id_juego], references: [id], onDelete: Cascade)
-  id_juego Int
+  juego                 Juegos            @relation(fields: [id_juego], references: [id], onDelete: Cascade)
+  ganador_jugador_juego Jugadores_Juegos? @relation(fields: [id_ganador_jugador_juego], references: [id], onDelete: Cascade)
+
+  id_juego                 Int
+  id_ganador_jugador_juego Int?
 
   estado_turno      EstadoTurnos @default(Futuro)
   fecha_turno       DateTime?    @default(now())
@@ -124,16 +127,18 @@ enum Estado_Jugadores_Juego {
 model Jugadores_Juegos {
   id Int @id @default(autoincrement())
 
-  jugador             Jugadores              @relation(fields: [id_jugador], references: [id], onDelete: NoAction)
-  juego               Juegos                 @relation(fields: [id_juego], references: [id], onDelete: NoAction)
-  jugador_grupo_turno Jugador_Grupo_Turno[]
-  rol                 Roles                  @default(Jugador)
-  estado              Estado_Jugadores_Juego @default(Participando)
+  jugador Jugadores              @relation(fields: [id_jugador], references: [id], onDelete: Cascade)
+  juego   Juegos                 @relation(fields: [id_juego], references: [id], onDelete: Cascade)
+  rol     Roles                  @default(Jugador)
+  estado  Estado_Jugadores_Juego @default(Participando)
 
   id_jugador Int
   id_juego   Int
 
   fecha_ingreso DateTime? @default(now())
+
+  jugador_grupo_turno Jugador_Grupo_Turno[]
+  Turnos              Turnos[]
 }
 
 model Jugador_Grupo_Turno {

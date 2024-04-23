@@ -3,7 +3,7 @@ import { EstadoInvitacion, Prisma } from "@prisma/client";
 import {
   actualizarJuego,
   crearJuego,
-  crearPuja,
+  registrarOferta,
   eliminarJuegoDeUnCreador,
   iniciarJuego,
   obtenerJuegos,
@@ -12,7 +12,7 @@ import {
 } from "../services/juego.service";
 import { HttpStatusCodes200, HttpStatusCodes400, response } from "../utils";
 import { HttpException, catchedAsync } from "../exceptions";
-import { notificarInicioOfertas } from "../services";
+import { notificarInicioOfertas, obtenerPujas } from "../services";
 
 const crear = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -93,18 +93,22 @@ const iniciarUnJuego = async (req: Request, res: Response) => {
 };
 
 const establecerPuja = async (req: Request, res: Response) => {
-  console.log({ body: req.body });
-  const payLoad: Prisma.Jugador_Grupo_TurnoCreateInput = req.body;
-  console.log({ payLoad });
+  const { monto_puja } = req.body;
+  console.log({ monto_puja });
   const { id_jugador, id_juego, id_turno } = req.params;
 
-  const puja = await crearPuja(
+  const puja = await registrarOferta(
     parseInt(id_jugador),
     parseInt(id_juego),
     parseInt(id_turno),
-    payLoad
+    monto_puja
   );
   response(res, HttpStatusCodes200.OK, puja);
+};
+
+const pujasDeJuego = async (req: Request, res: Response) => {
+  const pujas = obtenerPujas();
+  response(res, 200, pujas);
 };
 
 export default {
@@ -120,4 +124,5 @@ export default {
   eliminarJuegoDeCreador: catchedAsync(eliminarJuegoDeCreador),
   iniciarUnJuego: catchedAsync(iniciarUnJuego),
   establecerPuja: catchedAsync(establecerPuja),
+  pujasDeJuego: catchedAsync(pujasDeJuego),
 };

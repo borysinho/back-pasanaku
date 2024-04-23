@@ -1,10 +1,15 @@
-export const calcularFinDeOfertas = (
-  fecha_inicio_pujas: Date,
-  tiempo_segundos: number
-) => {
-  const fecha_fin_pujas: Date = new Date(fecha_inicio_pujas);
-  fecha_fin_pujas.setTime(fecha_fin_pujas.getTime() + tiempo_segundos * 1000);
-  return fecha_fin_pujas;
+export const sumarSegundosAFecha = (fecha: Date, tiempo_segundos: number) => {
+  const sumaFecha: Date = new Date(fecha);
+  sumaFecha.setTime(sumaFecha.getTime() + tiempo_segundos * 1000);
+  return sumaFecha;
+};
+
+export const tiempoDeOfertas = (fecha: Date, tiempo_segundos: number) => {
+  const fecha_fin = sumarSegundosAFecha(fecha, tiempo_segundos);
+  const timeStamp = Date.now();
+  const fecha_actual = new Date(timeStamp);
+  console.log({ fecha_actual, fecha_inicio: fecha });
+  return fecha_actual <= fecha_fin;
 };
 
 export const formatearTiempo = (segundos: number) => {

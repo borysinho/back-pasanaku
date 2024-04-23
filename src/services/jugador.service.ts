@@ -74,7 +74,7 @@ export const crearJugadorAPartirDeInvitacion = async (
 };
 
 export const obtenerJugador = async (id: number) => {
-  const jugador = await prisma.jugadores.findUnique({
+  const jugador = await prisma.jugadores.findUniqueOrThrow({
     where: { id },
     select: {
       id: true,

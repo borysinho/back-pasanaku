@@ -18,6 +18,19 @@ class JugadorRoutes {
       "/jugadores/juegos/:id_juego/notificaciones/testpush",
       notificacionesController.inicioDeOfertas
     );
+    this.router.post(
+      "/jugadores/juegos/:id_juego/notificaciones/ganadorturno",
+      notificacionesController.finDeOfertas
+    );
+    this.router.post(
+      "/jugadores/juegos/:id_juego/notificaciones/ganadorturno",
+      notificacionesController.finDeOfertas
+    );
+
+    this.router.post(
+      "/jugadores/juegos/:id_juego/notificaciones/testganador",
+      notificacionesController.testNotificarGanador
+    );
   }
 }
 
