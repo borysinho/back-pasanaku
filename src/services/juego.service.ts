@@ -15,7 +15,6 @@ import {
 } from "../utils";
 import { HttpException } from "../exceptions";
 import { existeId, obtenerJugador } from "./jugador.service";
-import { notificarGanadorDeTurno } from "./notificacion.service";
 
 const existeNombreJuegoEnJugador = async (
   id_jugador: number,
@@ -445,17 +444,17 @@ export const iniciarJuego = async (id_juego: number) => {
     },
   });
 
-  console.log({
-    monto_total: juegoIniciado.monto_total,
-    cant_jugadores: juegoIniciado.cant_jugadores,
-  });
+  // console.log({
+  //   monto_total: juegoIniciado.monto_total,
+  //   cant_jugadores: juegoIniciado.cant_jugadores,
+  // });
 
   // Calculamos el monto que se debe pagar
   const montoAPagar: number = Math.trunc(
     juegoIniciado.monto_total / juegoIniciado.cant_jugadores
   );
 
-  console.log(montoAPagar);
+  // console.log({ montoAPagar });
 
   // Establecemos el monto que se debe pagar y colocamos el juego en estado "Puja"
   const juego = await prisma.juegos.update({
@@ -473,13 +472,18 @@ export const iniciarJuego = async (id_juego: number) => {
     },
   });
 
+  // console.log({ juego });
+
   // Programamos la notificación del ganador
   if (juego) {
     const id_juego = juego.id;
+
     const fecha_fin = sumarSegundosAFecha(
-      juego.fecha_inicio,
+      juego.fecha_inicio_puja,
       juego.tiempo_puja_seg
     );
+
+    console.log({ fecha_programada: fecha_fin });
     programarGanadorDeJuego(fecha_fin, id_juego);
   }
 

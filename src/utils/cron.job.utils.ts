@@ -12,11 +12,14 @@ export const programarGanadorDeJuego = (fechaHora: Date, id_juego: number) => {
 
   // Programamos el evento
   try {
+    console.log(
+      `Programando notificaciones para juego ${id_juego}. Fecha: ${fechaHora}`
+    );
     cron.schedule(cronExpresion, async function () {
+      await notificarGanadorDeTurno(id_juego);
       console.log(
         `Tiempo de pujas finalizado. Notificando a participantes el ganador del juego ${id_juego}`
       );
-      await notificarGanadorDeTurno(id_juego);
     });
     return { error: false, data: "Notificaciones programadas correctamente" };
   } catch (error: any) {

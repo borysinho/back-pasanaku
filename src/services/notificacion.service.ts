@@ -415,7 +415,7 @@ const participantesDeJuego = async (id_juego: number) => {
 export const notificarGanadorDeTurno = async (id_juego: number) => {
   // Obtenemos el turno que se está jugando en el momento
 
-  console.log("Proceso: Notificar ganador de juego");
+  console.log(`Proceso: Notificar ganador de juego ${id_juego}`);
   const turno = await prisma.turnos.findMany({
     where: {
       id_juego,
@@ -468,6 +468,8 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     const jugador_ganador = await obtenerJugador(
       jugador_juego_ganador.id_jugador
     );
+
+    console.log({ jugador_ganador });
 
     //Actualizamos el ganador del turno
     const turno_ganador = await actualizarGanadorDeTurno(
