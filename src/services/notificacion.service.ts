@@ -351,6 +351,7 @@ export const notificarInicioOfertas = async (id_juego: number) => {
           jugador.client_token,
           juego.nombre,
           juego.id,
+          jugador.id,
           fecha_fin,
           juego.tiempo_puja_seg
         );
@@ -498,10 +499,10 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     const participantes = await participantesDeJuego(id_juego);
 
     // Recorremos todos los participantes del juego para notificarlos
-    participantes.forEach(async (element) => {
+    participantes.forEach(async (participante) => {
       const jugador = await prisma.jugadores.findUniqueOrThrow({
         where: {
-          id: element.id_jugador,
+          id: participante.id_jugador,
         },
       });
 
@@ -511,6 +512,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
           jugador.client_token,
           id_juego,
           jugador_juego_ganador.id,
+          participante.id,
           juego.nombre,
           jugador_ganador.nombre,
           monto_pujado_para_ganar,

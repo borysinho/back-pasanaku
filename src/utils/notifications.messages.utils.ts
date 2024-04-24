@@ -21,6 +21,7 @@ export const defaultInicioOfertas = (
   token: string,
   nombre_juego: string,
   id_juego: number,
+  id_jugador_notif: number,
   fecha_fin: Date,
   tiempo_restante_seg: number
 ) => {
@@ -35,6 +36,7 @@ export const defaultInicioOfertas = (
     data: {
       event: "inicio-ofertas",
       id_juego: id_juego.toString(),
+      id_jugador_notif,
       fecha_fin:
         fecha_fin.toLocaleDateString() + " " + fecha_fin.toLocaleTimeString(),
     },
@@ -50,6 +52,7 @@ export const defaultFinOfertas = (
   token: string,
   id_juego: number,
   id_jugador_ganador: number,
+  id_jugador_notif: number,
   nombre_juego: string,
   nombre_ganador: string,
   monto_puja: number,
@@ -72,6 +75,7 @@ El ganador del turno aleatoriamente es  ${nombre_ganador}.
       event: "fin-ofertas",
       id_juego: id_juego.toString(),
       id_jugador_ganador: id_jugador_ganador.toString(),
+      id_jugador_notif,
     },
     android: {
       priority: "HIGH",
