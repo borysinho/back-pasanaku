@@ -28,6 +28,16 @@ class TurnoRoutes {
       turnoController.obtenerTurnosJuego
     );
 
+    this.router.post(
+      "/jugadores/juegos/:id_juego/turnos/iniciar",
+      turnoController.iniciarUnTurno
+    );
+
+    this.router.post(
+      "/jugadores/:id_jugador/juegos/:id_juego/turno/:id_turno",
+      turnoController.establecerPuja
+    );
+
     this.router.delete(
       "/jugadores/juegos/:id_juego/turnos",
       turnoController.eliminarTurnosJuego

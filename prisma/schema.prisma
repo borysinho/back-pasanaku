@@ -79,8 +79,8 @@ model Invitados_Juegos {
 
 enum EstadoTurnos {
   Pasado
-  Tiempo_Ofertas
-  Tiempo_Pago
+  Actual
+  Futuro
 }
 
 model Turnos {
@@ -92,7 +92,7 @@ model Turnos {
   id_juego                 Int
   id_ganador_jugador_juego Int?
 
-  estado_turno      EstadoTurnos @default(Tiempo_Ofertas)
+  estado_turno      EstadoTurnos @default(Futuro)
   fecha_turno       DateTime?    @default(now())
   monto_minimo_puja Int          @default(0)
 

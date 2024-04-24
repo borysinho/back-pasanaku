@@ -37,15 +37,7 @@ class JuegoRoutes {
       "/jugadores/:id/juegos/pendientes",
       juegoController.invitacionesPendientesDeJugador
     );
-    this.router.post(
-      "/jugadores/juegos/:id_juego/iniciar",
-      juegoController.iniciarUnJuego
-    );
 
-    this.router.post(
-      "/jugadores/:id_jugador/juegos/:id_juego/turno/:id_turno",
-      juegoController.establecerPuja
-    );
     this.router.get("/jugadores/juegos/pujas", juegoController.pujasDeJuego);
   }
 }
