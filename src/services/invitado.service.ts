@@ -9,7 +9,6 @@ export const crearInvitado = async (
   correo: string,
   telf: string,
   nombre_invitado: string
-  // { nombre_invitado }: Prisma.Invitados_JuegosCreateInput
 ) => {
   const juego = await obtenerJuego(id);
 

@@ -423,6 +423,8 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     },
   });
 
+  console.log({ turno });
+
   const juego = await obtenerJuego(id_juego);
 
   if (turno.length === 1) {
@@ -443,7 +445,11 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     const jugador_juego = await participantesDeJuego(id_juego);
 
     let jugador_juego_ganador: Jugadores_Juegos;
-    // Preguntamos si no hubo pujas
+
+    // variable que guarda el monto con el que ganó el turno
+    let monto_pujado_para_ganar: number = 0;
+
+    // Preguntamos si NO hubo pujas
     if (jugador_grupo_turno === null) {
       // No hubo ganador, seleccionamos un ganador entre los participantes
 
@@ -463,6 +469,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
           id: jugador_grupo_turno.id_jugador_juego,
         },
       });
+      monto_pujado_para_ganar = jugador_grupo_turno.monto_puja;
     }
 
     const jugador_ganador = await obtenerJugador(
@@ -505,7 +512,9 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
           id_juego,
           jugador_juego_ganador.id,
           juego.nombre,
-          jugador_ganador.nombre
+          jugador_ganador.nombre,
+          monto_pujado_para_ganar,
+          juego.moneda
         );
         //Aqui notificamos
         console.log({ EnviandoNotificacion: message });

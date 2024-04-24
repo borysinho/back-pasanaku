@@ -18,3 +18,13 @@ export const obtenerPujas = async () => {
 
   return pujas;
 };
+
+export const eliminarTurnosDeJuego = async (id_juego: number) => {
+  const turnos = await prisma.turnos.deleteMany({
+    where: {
+      id_juego,
+    },
+  });
+
+  return turnos;
+};

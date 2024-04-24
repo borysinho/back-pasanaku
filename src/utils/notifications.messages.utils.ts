@@ -1,3 +1,4 @@
+import { Moneda } from "@prisma/client";
 import { formatearTiempo } from "./fechas.utils";
 
 type TFBNotification = {
@@ -26,8 +27,8 @@ export const defaultInicioOfertas = (
   const message: TFBMessage = {
     token,
     notification: {
-      title: "Inicio de ofertas",
-      body: `Se están recibiendo ofertas para el juego ${nombre_juego}. Tiene ${formatearTiempo(
+      title: `Inicio de ofertas para ${nombre_juego}`,
+      body: `Tiene ${formatearTiempo(
         tiempo_restante_seg
       )} para poder realizar su oferta`,
     },
@@ -50,14 +51,22 @@ export const defaultFinOfertas = (
   id_juego: number,
   id_jugador_ganador: number,
   nombre_juego: string,
-  // fecha_fin: Date,
-  nombre_ganador: string
+  nombre_ganador: string,
+  monto_puja: number,
+  moneda: Moneda
 ) => {
+  const mensaje: string =
+    monto_puja === 0
+      ? `No se recibieron ofertas para el turno. 
+El ganador del turno aleatoriamente es  ${nombre_ganador}. 
+¡Felicidades!`
+      : `El ganador del turno es ${nombre_ganador} con ${monto_puja} ${moneda}.
+¡Felicidades!`;
   const message: TFBMessage = {
     token,
     notification: {
-      title: "Fin de ofertas",
-      body: `El ganador del turno del juego ${nombre_juego} ha sido ${nombre_ganador}. ¡Felicidades!`,
+      title: `Fin de ofertas para ${nombre_juego}`,
+      body: mensaje,
     },
     data: {
       event: "fin-ofertas",
