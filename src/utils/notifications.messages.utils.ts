@@ -36,7 +36,7 @@ export const defaultInicioOfertas = (
     data: {
       event: "inicio-ofertas",
       id_juego: id_juego.toString(),
-      id_jugador_notif,
+      id_jugador_notif: id_jugador_notif.toString(),
       fecha_fin:
         fecha_fin.toLocaleDateString() + " " + fecha_fin.toLocaleTimeString(),
     },
@@ -75,7 +75,7 @@ El ganador del turno aleatoriamente es  ${nombre_ganador}.
       event: "fin-ofertas",
       id_juego: id_juego.toString(),
       id_jugador_ganador: id_jugador_ganador.toString(),
-      id_jugador_notif,
+      id_jugador_notif: id_jugador_notif.toString(),
     },
     android: {
       priority: "HIGH",

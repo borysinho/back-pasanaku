@@ -407,6 +407,12 @@ export const jugadorTieneJuegoPendiente = async (
 
 export const iniciarJuego = async (id_juego: number) => {
   // Obtenemos la fecha actual
+
+  /**
+   * Validaciones
+   *    - No puede haber otro turno del mismo juego que esté
+   */
+
   const timeStamp = Date.now();
   const fecha_actual = new Date(timeStamp);
 
@@ -431,9 +437,9 @@ export const iniciarJuego = async (id_juego: number) => {
   // Creamos un turno y lo habilitamos como el turno en curso
 
   // TODO Arreglar para que se pueda iniciar 2 veces el mismo juego
-  await prisma.turnos.create({
+  const turno = await prisma.turnos.create({
     data: {
-      estado_turno: "Actual",
+      estado_turno: "Tiempo_Ofertas",
       monto_minimo_puja: Math.trunc((juegoIniciado.saldo_restante * 8) / 100),
       juego: {
         connect: { id: id_juego },
@@ -483,11 +489,23 @@ export const iniciarJuego = async (id_juego: number) => {
       juego.tiempo_puja_seg
     );
 
-    console.log({ fecha_programada: fecha_fin });
-    programarGanadorDeJuego(fecha_fin, id_juego);
+    console.log({
+      fecha_programada: fecha_fin,
+      ParaHacer: "TENGO QUE PROGRAMAR EL ENVÍO DEL GANADOR DEL JUEGO",
+    });
+    // programarGanadorDeJuego(fecha_fin, id_juego);
   }
 
-  return juego;
+  const turno_actualizado = prisma.turnos.findUnique({
+    where: {
+      id: turno.id,
+    },
+    include: {
+      juego: true,
+    },
+  });
+
+  return turno_actualizado;
 };
 
 const actuacrearJugador_Grupo_Turno = async (

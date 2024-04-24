@@ -87,10 +87,10 @@ const iniciarUnJuego = async (req: Request, res: Response) => {
   const { id_juego } = req.params;
 
   if (id_juego) {
-    const juego = await iniciarJuego(parseInt(id_juego));
-    const notificaciones = await notificarInicioOfertas(parseInt(id_juego));
+    const turno = await iniciarJuego(parseInt(id_juego));
+    await notificarInicioOfertas(parseInt(id_juego));
 
-    response(res, HttpStatusCodes200.OK, { juego, notificaciones });
+    response(res, HttpStatusCodes200.OK, { turno });
   } else {
     throw new HttpException(
       HttpStatusCodes400.NOT_FOUND,

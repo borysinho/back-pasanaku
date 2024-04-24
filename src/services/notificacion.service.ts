@@ -420,7 +420,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
   const turno = await prisma.turnos.findMany({
     where: {
       id_juego,
-      estado_turno: "Actual",
+      estado_turno: "Tiempo_Ofertas",
     },
   });
 
