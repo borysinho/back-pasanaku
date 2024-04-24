@@ -13,6 +13,9 @@ class JuegoRoutes {
       "/juegos",
       juegoController.obtenerJuegosDeTodosLosJugadores
     );
+
+    this.router.get("/jugadores/juegos/:id", juegoController.obtenerJuegoPorId);
+
     this.router.get(
       "/jugadores/:id/juegos",
       juegoController.obtenerJuegosDeUnJugador

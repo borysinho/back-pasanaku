@@ -513,7 +513,6 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       }
     });
 
-    console.log({ jugador_grupo_turno });
     return jugador_grupo_turno;
   }
 };

@@ -9,6 +9,7 @@ import {
   obtenerJuegos,
   obtenerJuegosConEstado,
   obtenerJuegosDeJugador,
+  obtenerJuego,
 } from "../services/juego.service";
 import { HttpStatusCodes200, HttpStatusCodes400, response } from "../utils";
 import { HttpException, catchedAsync } from "../exceptions";
@@ -21,6 +22,12 @@ const crear = async (req: Request, res: Response) => {
   console.log({ id, body: datosJuego });
   const juego = await crearJuego(parseInt(id), datosJuego);
 
+  response(res, HttpStatusCodes200.OK, juego);
+};
+
+const obtenerJuegoPorId = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const juego = await obtenerJuego(parseInt(id));
   response(res, HttpStatusCodes200.OK, juego);
 };
 
@@ -113,6 +120,7 @@ const pujasDeJuego = async (req: Request, res: Response) => {
 
 export default {
   crear: catchedAsync(crear),
+  obtenerJuegoPorId: catchedAsync(obtenerJuegoPorId),
   obtenerJuegosDeUnJugador: catchedAsync(obtenerJuegosDeUnJugador),
   obtenerJuegosDeTodosLosJugadores: catchedAsync(
     obtenerJuegosDeTodosLosJugadores
