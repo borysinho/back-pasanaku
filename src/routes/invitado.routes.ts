@@ -30,7 +30,7 @@ class InvitadoRoutes {
 
     //Crear un invitado para un juego previamente creado
     this.router.post(
-      "/jugadores/juegos/:idjuego/invitados",
+      "/jugadores/:id_jugador_creador/juegos/:id_juego/invitados",
       invitadoController.crear
     );
 

@@ -10,7 +10,7 @@ import nodemailer from "nodemailer";
 import { templateWhatsApp } from "../templates/whatsapp.template";
 import { templateEMail } from "../templates/email.template";
 import { Jugadores, Jugadores_Juegos, Prisma } from "@prisma/client";
-import { obtenerJuego } from "./juego.service";
+// import { obtenerJuego } from "./juego.service";
 import { HttpException } from "../exceptions";
 import {
   obtenerCorreosInvitados,
@@ -33,6 +33,7 @@ import {
   obtenerJugadoresDeJuego,
 } from "./jugador.service";
 import { obtenerTurnoPorId } from "./turno.service";
+import { obtenerJuego } from "./juego.service";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -111,11 +112,15 @@ export const notificarPorCorreo = async (
   idsInvitados: [],
   id_Juego: number
 ) => {
-  try {
-    const linkApp = process.env.LINK_APP || "";
-    const { nombre } = await obtenerJuego(id_Juego);
+  const linkApp = process.env.LINK_APP || "";
+  const juego = await obtenerJuego(id_Juego);
+  if (juego) {
     const correos = await obtenerCorreosInvitados(idsInvitados);
-    const invitacion = await enviarInvitacionCorreo(correos, nombre, linkApp);
+    const invitacion = await enviarInvitacionCorreo(
+      correos,
+      juego.nombre,
+      linkApp
+    );
 
     //ACTUALIZAMOS LOS ESTADOS DEL ENVÍO DEL CORREO
     if (invitacion instanceof HttpException) {
@@ -147,8 +152,11 @@ export const notificarPorCorreo = async (
     }
 
     return invitacion;
-  } catch (error: any) {
-    return new HttpException(HttpStatusCodes400.BAD_REQUEST, error.message);
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No existe un juego con el id_juego especificado"
+    );
   }
 };
 
@@ -434,7 +442,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
 
   const juego = await obtenerJuego(id_juego);
 
-  if (turno.length === 1) {
+  if (turno.length === 1 && juego !== null) {
     // Hay un turno que está en juego con estado "Actual"
     const id_turno = turno[0].id;
 
@@ -531,6 +539,19 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     });
 
     return jugador_grupo_turno;
+  } else {
+    // turno.length === 1 && juego !== null
+    if (turno.length !== 1) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "El juego especificado no está en tiempo de Ofertas"
+      );
+    } else {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No existe un juego con el ID especificado"
+      );
+    }
   }
 };
 

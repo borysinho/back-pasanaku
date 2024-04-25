@@ -140,8 +140,8 @@ export const registrarOferta = async (
     // Obtenemos el turno
     const turno = await obtenerTurnoPorId(id_turno);
 
-    // Si existe el turno y ademas el jugador es parte del juego, podemos registrar ofertas
-    if (turno && jugador_juego) {
+    // Si existe el juego, el turno y ademas el jugador es parte del juego, podemos registrar ofertas
+    if (juego && turno && jugador_juego) {
       // Calculamos si es tiempo de ofertas
       const esTiempoDeOfertas = tiempoDeOfertas(
         turno.fecha_inicio_puja,
@@ -185,6 +185,11 @@ export const registrarOferta = async (
         throw new HttpException(
           HttpStatusCodes400.BAD_REQUEST,
           "No existe el turno indicado"
+        );
+      } else {
+        throw new HttpException(
+          HttpStatusCodes400.BAD_REQUEST,
+          "No existe el juego con el ID especificado"
         );
       }
     }

@@ -269,9 +269,19 @@ export const eliminarJuegoDeUnCreador = async (
   }
 };
 
+// export const obtenerJuego = async (id_juego: number) => {
+//   const juego = await prisma.juegos.findUnique({
+//     where: { id: id_juego },
+//   });
+
+//   return juego;
+// };
+
 export const obtenerJuego = async (id_juego: number) => {
-  const juego = await prisma.juegos.findUniqueOrThrow({
-    where: { id: id_juego },
+  const juego = await prisma.juegos.findUnique({
+    where: {
+      id: id_juego,
+    },
   });
 
   return juego;

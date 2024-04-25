@@ -24,6 +24,7 @@ import { aceptarInvitacion } from "../services";
 const crear = async (req: Request, res: Response) => {
   const { id_juego, id_jugador_creador } = req.params;
   const { telf, correo, nombre } = req.body;
+  console.log({ id_juego, id_jugador_creador, telf, correo, nombre });
   const invitado = await crearInvitado(
     parseInt(id_juego),
     parseInt(id_jugador_creador),
