@@ -22,9 +22,15 @@ import {
 import { aceptarInvitacion } from "../services";
 
 const crear = async (req: Request, res: Response) => {
-  const { idjuego } = req.params;
+  const { id_juego, id_jugador_creador } = req.params;
   const { telf, correo, nombre } = req.body;
-  const invitado = await crearInvitado(parseInt(idjuego), correo, telf, nombre);
+  const invitado = await crearInvitado(
+    parseInt(id_juego),
+    parseInt(id_jugador_creador),
+    correo,
+    telf,
+    nombre
+  );
   response(res, HttpStatusCodes200.OK, invitado);
 };
 

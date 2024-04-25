@@ -35,16 +35,17 @@ const obtenerTodosTurnos = async (req: Request, res: Response) => {
 };
 
 const establecerPuja = async (req: Request, res: Response) => {
-  const { monto_puja } = req.body;
-  console.log({ monto_puja });
-  const { id_jugador, id_juego, id_turno } = req.params;
+  const { monto_puja, id_jugador_juego } = req.body;
+  console.log({ monto_puja, id_jugador_juego });
+  const { id_turno } = req.params;
 
   const puja = await registrarOferta(
-    parseInt(id_jugador),
-    parseInt(id_juego),
+    parseInt(id_jugador_juego),
     parseInt(id_turno),
     monto_puja
   );
+
+  console.log({ puja });
   response(res, HttpStatusCodes200.OK, puja);
 };
 

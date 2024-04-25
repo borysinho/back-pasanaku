@@ -1,22 +1,28 @@
 import { Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
 import { obtenerJuego } from "./juego.service";
-import { HttpStatusCodes400 } from "../utils";
+import { HttpStatusCodes400, defaultInvitacionAJuego } from "../utils";
 import { HttpException } from "../exceptions";
+import {
+  obtenerCuentaCreadaDeUnInvitado,
+  obtenerJugador,
+} from "./jugador.service";
+import { sendFcmMessage } from "./notificacion.service";
 
 export const crearInvitado = async (
-  id: number,
+  id_juego: number,
+  id_jugador_creador: number,
   correo: string,
   telf: string,
   nombre_invitado: string
 ) => {
-  const juego = await obtenerJuego(id);
+  const juego = await obtenerJuego(id_juego);
 
   if (juego) {
     const invitado = await prisma.invitados_Juegos.create({
       data: {
         nombre_invitado,
-        juego: { connect: { id } },
+        juego: { connect: { id: id_juego } },
         invitado: {
           connectOrCreate: {
             where: {
@@ -31,6 +37,27 @@ export const crearInvitado = async (
         },
       },
     });
+
+    console.log({ invitado });
+
+    const cuentaJugadorInvitado = await obtenerCuentaCreadaDeUnInvitado(
+      invitado.id_invitado
+    );
+
+    console.log({ cuentaJugadorInvitado });
+    const cuentaJugadorCreador = await obtenerJugador(id_jugador_creador);
+
+    if (cuentaJugadorInvitado && cuentaJugadorCreador) {
+      const message = defaultInvitacionAJuego(
+        id_juego,
+        cuentaJugadorInvitado.id,
+        juego.nombre,
+        cuentaJugadorCreador.nombre,
+        cuentaJugadorInvitado.client_token
+      );
+
+      sendFcmMessage(message);
+    }
 
     return invitado;
   } else {

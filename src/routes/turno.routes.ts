@@ -34,7 +34,7 @@ class TurnoRoutes {
     );
 
     this.router.post(
-      "/jugadores/:id_jugador/juegos/:id_juego/turno/:id_turno",
+      "/jugadores/juegos/turno/:id_turno",
       turnoController.establecerPuja
     );
 

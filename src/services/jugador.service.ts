@@ -81,6 +81,7 @@ export const obtenerJugador = async (id: number) => {
       nombre: true,
       usuario: true,
       invitado: true,
+      client_token: true,
     },
   });
 
@@ -233,6 +234,7 @@ export const obtenerCuentaCreadaDeUnInvitado = async (id_invitado: number) => {
       nombre: true,
       usuario: true,
       invitado: true,
+      client_token: true,
     },
   });
 

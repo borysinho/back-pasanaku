@@ -91,6 +91,16 @@ export const crearJuego = async (
   }
 };
 
+export const buscarJugadorJuegoPorId = async (id_jugador_juego: number) => {
+  const jugador_juego = await prisma.jugadores_Juegos.findUnique({
+    where: {
+      id: id_jugador_juego,
+    },
+  });
+
+  return jugador_juego;
+};
+
 const buscarJugadorJuego = async (id_juego: number, id_jugador: number) => {
   const jugador_juego = await prisma.jugadores_Juegos.findMany({
     where: {
@@ -260,7 +270,7 @@ export const eliminarJuegoDeUnCreador = async (
 };
 
 export const obtenerJuego = async (id_juego: number) => {
-  const juego = await prisma.juegos.findFirstOrThrow({
+  const juego = await prisma.juegos.findUniqueOrThrow({
     where: { id: id_juego },
   });
 

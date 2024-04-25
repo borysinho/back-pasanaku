@@ -304,7 +304,7 @@ function getAccessToken() {
   });
 }
 
-function sendFcmMessage(fcmMessage: Object) {
+export function sendFcmMessage(fcmMessage: Object) {
   getAccessToken().then(function (accessToken) {
     const options = {
       hostname: HOST,
@@ -430,7 +430,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     },
   });
 
-  console.log({ turno });
+  // console.log({ turno });
 
   const juego = await obtenerJuego(id_juego);
 
@@ -483,7 +483,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       jugador_juego_ganador.id_jugador
     );
 
-    console.log({ jugador_ganador });
+    // console.log({ jugador_ganador });
 
     //Actualizamos el ganador del turno
     const turno_ganador = await actualizarGanadorDeTurno(
@@ -533,3 +533,5 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     return jugador_grupo_turno;
   }
 };
+
+export const notificarInvitacionAJuego = async () => {};

@@ -9,7 +9,11 @@ import {
   sumarSegundosAFecha,
   tiempoDeOfertas,
 } from "../utils";
-import { actualizarJuego, obtenerJuego } from "./juego.service";
+import {
+  actualizarJuego,
+  buscarJugadorJuegoPorId,
+  obtenerJuego,
+} from "./juego.service";
 import { notificarInicioOfertas } from "./notificacion.service";
 
 export const crearTurno = async (
@@ -34,6 +38,12 @@ export const eliminarTurnosDeJuego = async (id_juego: number) => {
   const turnos = await prisma.turnos.deleteMany({
     where: {
       id_juego,
+    },
+  });
+
+  const juegos = prisma.juegos.updateMany({
+    data: {
+      monto_total: 9000,
     },
   });
 
@@ -69,7 +79,7 @@ export const obtenerGanadorDeturno = async (id_turno: number) => {
   if (turno != null) {
     if (turno.id_ganador_jugador_juego !== null) {
       const jugador = await obtenerJugador(turno.id_ganador_jugador_juego);
-      return jugador;
+      return { jugador, turno };
     } else {
       throw new HttpException(
         HttpStatusCodes400.BAD_REQUEST,
@@ -111,47 +121,40 @@ const actuacrearJugador_Grupo_Turno = async (
 
 export const registrarOferta = async (
   // id_jugador_juego: number,
-  id_jugador: number,
-  id_juego: number,
+  id_jugador_juego: number,
   id_turno: number,
   // payLoad: Prisma.Jugador_Grupo_TurnoCreateInput
   monto: number
 ) => {
-  console.log({ id_jugador, id_juego, id_turno });
+  const jugador_juego = await buscarJugadorJuegoPorId(id_jugador_juego);
 
-  // Obtenemos el juego
-  const juego = await obtenerJuego(id_juego);
+  if (jugador_juego) {
+    const id_jugador = jugador_juego.id_jugador;
+    const id_juego = jugador_juego.id_juego;
 
-  // Obtenemos todos los jugador_juego
-  const jugadores_juegos = await prisma.jugadores_Juegos.findMany({
-    where: {
-      id_juego,
-      id_jugador,
-    },
-  });
+    console.log({ id_jugador, id_juego, id_turno });
 
-  // Obtenemos el turno
-  const turno = await obtenerTurnoPorId(id_turno);
+    // Obtenemos el juego
+    const juego = await obtenerJuego(id_juego);
 
-  // Si existe juego, el turno y ademas el jugador es parte del juego, podemos registrar ofertas
-  if (juego && turno && jugadores_juegos.length > 0) {
-    // Calculamos si es tiempo de ofertas
-    const esTiempoDeOfertas = tiempoDeOfertas(
-      turno.fecha_inicio_puja,
-      turno.tiempo_puja_seg
-    );
+    // Obtenemos el turno
+    const turno = await obtenerTurnoPorId(id_turno);
 
-    // Validamos si es tiempo de ofertas
-    if (esTiempoDeOfertas) {
-      console.log({ esTiempoDeOfertas });
-      console.log({ jugadores_juegos });
+    // Si existe el turno y ademas el jugador es parte del juego, podemos registrar ofertas
+    if (turno && jugador_juego) {
+      // Calculamos si es tiempo de ofertas
+      const esTiempoDeOfertas = tiempoDeOfertas(
+        turno.fecha_inicio_puja,
+        turno.tiempo_puja_seg
+      );
 
-      // Validamos si el monto de la oferta es mayor o igual al monto mínimo de la puja
-      if (monto >= turno.monto_minimo_puja) {
-        //El creador puede ingresar a la misma partida por suplencia de otro jugador, por lo que puede un jugador puede ingresar mas de 1 vez al juego.
-        // Recorremos cada registro de jugador_juego
-        jugadores_juegos.forEach(async (jugador_juego) => {
-          // Actualizamos o creamos el monto de la oferta
+      // Validamos si es tiempo de ofertas
+      if (esTiempoDeOfertas) {
+        console.log({ esTiempoDeOfertas });
+        console.log({ jugador_juego });
+
+        // Validamos si el monto de la oferta es mayor o igual al monto mínimo de la puja
+        if (monto >= turno.monto_minimo_puja) {
           const jugador_grupo_turno = await actuacrearJugador_Grupo_Turno(
             id_turno,
             jugador_juego.id,
@@ -159,38 +162,37 @@ export const registrarOferta = async (
           );
           console.log({ jugador_grupo_turno });
           return jugador_grupo_turno;
-        });
+        } else {
+          throw new HttpException(
+            HttpStatusCodes400.BAD_REQUEST,
+            `El monto mínimo de la puja debe ser mayor a ${turno.monto_minimo_puja} ${juego.moneda}. del saldo del turno`
+          );
+        }
       } else {
         throw new HttpException(
           HttpStatusCodes400.BAD_REQUEST,
-          `El monto mínimo de la puja debe ser mayor al 8% del saldo del turno`
+          "No es tiempo de ofertas."
         );
       }
     } else {
-      throw new HttpException(
-        HttpStatusCodes400.BAD_REQUEST,
-        "No es tiempo de ofertas."
-      );
+      if (!juego) {
+        throw new HttpException(
+          HttpStatusCodes400.BAD_REQUEST,
+          "No existe el juego indicado"
+        );
+      }
+      if (!turno) {
+        throw new HttpException(
+          HttpStatusCodes400.BAD_REQUEST,
+          "No existe el turno indicado"
+        );
+      }
     }
   } else {
-    if (!juego) {
-      throw new HttpException(
-        HttpStatusCodes400.BAD_REQUEST,
-        "No existe el juego indicado"
-      );
-    }
-    if (!turno) {
-      throw new HttpException(
-        HttpStatusCodes400.BAD_REQUEST,
-        "No existe el turno indicado"
-      );
-    }
-    if (jugadores_juegos.length === 0) {
-      throw new HttpException(
-        HttpStatusCodes400.BAD_REQUEST,
-        "No existe el jugador_juego indicado"
-      );
-    }
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No existe jugador_juego con el ID especificado"
+    );
   }
 };
 
@@ -247,14 +249,21 @@ const crearTurnoPreviaValidacion = async (
   // Obtenemos la fecha y hora actual para el inicio del turno
   const ahora = fechaHoraActual();
 
-  // Saldo restante es el monto total - ( cuota mensual * nro turno ) - cuota mensual
+  // Saldo restante es el monto total - ( cuota mensual * nro turno )
   // Cuota mensual es monto total / cantidad de jugadores
   const cuota_mensual: number = Math.trunc(monto_total / cant_jugadores);
+  console.log({ cuota_mensual, monto_total, cant_jugadores });
   const saldo_restante: number =
-    monto_total - cuota_mensual * nro_turno - cuota_mensual;
+    monto_total - cuota_mensual * nro_turno + cuota_mensual;
+  console.log({
+    saldo_restante,
+    monto_total,
+    cuota_mensual,
+    nro_turno,
+  });
 
   // El monto mínimo de puja es (saldo restante * 100) / 8
-  const monto_minimo_puja = Math.trunc((saldo_restante * 100) / 8);
+  const monto_minimo_puja = Math.trunc((saldo_restante * 8) / 100);
 
   const turnoCreate: Prisma.TurnosCreateWithoutJuegoInput = {
     estado_turno: "TiempoOfertas",
@@ -280,6 +289,7 @@ export const iniciarTurno = async (id_juego: number, tiempoPujaSeg: number) => {
 
   // Obtenemos el juego
   const juego = await obtenerJuego(id_juego);
+  console.log({ juego });
 
   //Validamos si existe
   if (juego) {
@@ -301,35 +311,44 @@ export const iniciarTurno = async (id_juego: number, tiempoPujaSeg: number) => {
         `Existe al menos un turno del juego que no ha finalizado.
 Detalles: ${turnosDeJuegoEnOfertasOPagos.toString()}`
       );
-      // Podemos crear el turno de manera segura
+      // No existen turnos sin finalizar, podemos continuar.
     } else {
-      // Obtenemos la cantidad de turnos que tiene el juego para actualizar el estado del juego si no hay ninguno
+      // Obtenemos todos los turnos que se hayan creado para este juego
       const turnosDeJuego = await obtenerTurnosDeJuego(id_juego);
 
-      // Validamos si no existe ningún turno previamente creado para el juego especificado
-      if (turnosDeJuego.length === 0) {
-        // Actualizamos el estado a "Iniciado"
-        await actualizarJuego(id_juego, { estado_juego: "Iniciado" });
+      // Validamos si no llegamos ya al final de los turnos
+      if (turnosDeJuego.length === juego.cant_jugadores) {
+        throw new HttpException(
+          HttpStatusCodes400.BAD_REQUEST,
+          "Ha llegado al máximo de turnos creados"
+        );
+        // Hay turnos disponibles, se puede crear uno adicional
+      } else {
+        // Validamos si no existe ningún turno previamente creado para el juego especificado
+        if (turnosDeJuego.length === 0) {
+          // Actualizamos el estado a "Iniciado"
+          await actualizarJuego(id_juego, { estado_juego: "Iniciado" });
+        }
+
+        // Creamos un turno nuevo generando todos los datos necesarios
+        const turno = await crearTurnoPreviaValidacion(
+          id_juego,
+          juego.monto_total,
+          juego.cant_jugadores,
+          tiempoPujaSeg
+        );
+
+        // Notificamos a los clientes el inicio de las ofertas
+        await notificarInicioOfertas(id_juego, turno.id);
+
+        // Programamos el cierre de las ofertas
+        programarGanadorDeJuego(
+          sumarSegundosAFecha(turno.fecha_inicio_puja, turno.tiempo_puja_seg),
+          id_juego
+        );
+
+        return turno;
       }
-
-      // Creamos un turno nuevo generando todos los datos necesarios
-      const turno = await crearTurnoPreviaValidacion(
-        id_juego,
-        juego.monto_total,
-        juego.cant_jugadores,
-        tiempoPujaSeg
-      );
-
-      // Notificamos a los clientes el inicio de las ofertas
-      await notificarInicioOfertas(id_juego, turno.id);
-
-      // Programamos el cierre de las ofertas
-      programarGanadorDeJuego(
-        sumarSegundosAFecha(turno.fecha_inicio_puja, turno.tiempo_puja_seg),
-        id_juego
-      );
-
-      return turno;
     }
   } else {
     throw new HttpException(
@@ -337,97 +356,4 @@ Detalles: ${turnosDeJuegoEnOfertasOPagos.toString()}`
       "No existe el juego con el ID especificado"
     );
   }
-
-  // const timeStamp = Date.now();
-  // const fecha_actual = new Date(timeStamp);
-
-  // // Actualizamos el estado del juego a "Iniciado" y la fecha para el inicio de puja en la hora actual
-  // const juegoIniciado = await prisma.juegos.update({
-  //   where: {
-  //     id: id_juego,
-  //   },
-  //   data: {
-  //     estado_juego: "Iniciado",
-  //     fecha_inicio_puja: fecha_actual,
-  //   },
-  //   select: {
-  //     nombre: true,
-  //     estado_juego: true,
-  //     saldo_restante: true,
-  //     monto_total: true,
-  //     cant_jugadores: true,
-  //   },
-  // });
-
-  // // Creamos un turno y lo habilitamos como el turno en curso
-
-  // const turno = await prisma.turnos.create({
-  //   data: {
-  //     estado_turno: "Tiempo_Ofertas",
-  //     monto_minimo_puja: Math.trunc((juegoIniciado.saldo_restante * 8) / 100),
-  //     juego: {
-  //       connect: { id: id_juego },
-  //     },
-  //   },
-  //   include: {
-  //     juego: true,
-  //   },
-  // });
-
-  // // console.log({
-  // //   monto_total: juegoIniciado.monto_total,
-  // //   cant_jugadores: juegoIniciado.cant_jugadores,
-  // // });
-
-  // // Calculamos el monto que se debe pagar
-  // const montoAPagar: number = Math.trunc(
-  //   juegoIniciado.monto_total / juegoIniciado.cant_jugadores
-  // );
-
-  // // console.log({ montoAPagar });
-
-  // // Establecemos el monto que se debe pagar y colocamos el juego en estado "Puja"
-  // const juego = await prisma.juegos.update({
-  //   where: {
-  //     id: id_juego,
-  //   },
-  //   data: {
-  //     estado_juego: "Puja",
-  //     saldo_restante: {
-  //       decrement: montoAPagar,
-  //     },
-  //   },
-  //   include: {
-  //     turnos: true,
-  //   },
-  // });
-
-  // // console.log({ juego });
-
-  // // Programamos la notificación del ganador
-  // if (juego) {
-  //   const id_juego = juego.id;
-
-  //   const fecha_fin = sumarSegundosAFecha(
-  //     juego.fecha_inicio_puja,
-  //     juego.tiempo_puja_seg
-  //   );
-
-  //   console.log({
-  //     fecha_programada: fecha_fin,
-  //     ParaHacer: "TENGO QUE PROGRAMAR EL ENVÍO DEL GANADOR DEL JUEGO",
-  //   });
-  //   // programarGanadorDeJuego(fecha_fin, id_juego);
-  // }
-
-  // const turno_actualizado = prisma.turnos.findUnique({
-  //   where: {
-  //     id: turno.id,
-  //   },
-  //   include: {
-  //     juego: true,
-  //   },
-  // });
-
-  // return turno_actualizado;
 };

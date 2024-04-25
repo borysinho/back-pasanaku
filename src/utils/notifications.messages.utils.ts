@@ -60,9 +60,9 @@ export const defaultFinOfertas = (
 ) => {
   const mensaje: string =
     monto_puja === 0
-      ? `${nombre_ganador} ha ganado aleatoriamente el turno. 
+      ? `${nombre_ganador} ganó aleatoriamente el turno. 
 ¡Felicidades!`
-      : `${nombre_ganador} ha ganado el turno con ${monto_puja} ${moneda}.
+      : `${nombre_ganador} ganó el turno con ${monto_puja} ${moneda}.
 ¡Felicidades!`;
   const message: TFBMessage = {
     token,
@@ -75,6 +75,32 @@ export const defaultFinOfertas = (
       id_juego: id_juego.toString(),
       id_jugador_ganador: id_jugador_ganador.toString(),
       id_jugador_notif: id_jugador_notif.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};
+
+export const defaultInvitacionAJuego = (
+  id_juego: number,
+  id_jugador: number,
+  nombre_juego: string,
+  nombre_creador: string,
+  token: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: `Invitación a juego ${nombre_juego}`,
+      body: `${nombre_creador} te ha invitado a unirte al juego ${nombre_juego}.`,
+    },
+    data: {
+      event: "invitacion-juego",
+      id_juego: id_juego.toString(),
+      id_jugador: id_jugador.toString(),
     },
     android: {
       priority: "HIGH",
