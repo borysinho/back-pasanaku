@@ -27,3 +27,8 @@ export const formatearTiempo = (segundos: number) => {
     (segundos > 0 ? `${segundos} segundos` : "")
   ).trim();
 };
+
+export const fechaHoraActual = () => {
+  const dateNow = Date.now();
+  return new Date(dateNow);
+};

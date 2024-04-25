@@ -10,8 +10,6 @@ datasource db {
 enum EstadoJuego {
   Nuevo
   Iniciado
-  Puja
-  EsperandoTurno
   Finalizado
 }
 
@@ -26,14 +24,12 @@ model Juegos {
   estado_juego EstadoJuego @default(Nuevo)
   moneda       Moneda      @default(BS)
 
-  nombre            String
-  fecha_inicio      DateTime @db.Date
-  monto_total       Int
-  cant_jugadores    Int      @default(0)
-  fecha_inicio_puja DateTime @default(now())
-  tiempo_puja_seg   Int      @default(120)
-  lapso_turnos_dias Int      @default(30)
-  saldo_restante    Int      @default(0)
+  nombre         String
+  fecha_inicio   DateTime @db.Date
+  monto_total    Int
+  cant_jugadores Int      @default(0)
+
+  lapso_turnos_dias Int @default(30)
 
   jugadores_juegos Jugadores_Juegos[]
   invitados_juegos Invitados_Juegos[]
@@ -79,8 +75,8 @@ model Invitados_Juegos {
 
 enum EstadoTurnos {
   Pasado
-  Actual
-  Futuro
+  TiempoOfertas
+  TiempoPagos
 }
 
 model Turnos {
@@ -92,8 +88,14 @@ model Turnos {
   id_juego                 Int
   id_ganador_jugador_juego Int?
 
-  estado_turno      EstadoTurnos @default(Futuro)
+  estado_turno      EstadoTurnos @default(TiempoOfertas)
   fecha_turno       DateTime?    @default(now())
+  fecha_inicio_puja DateTime     @default(now())
+  tiempo_puja_seg   Int          @default(120)
+  nro_turno         Int          @default(1)
+  // El saldo restante es el monto_base_de_cada_turno * cantidad_turnos_restantes (incluido el actual) 
+  saldo_restante    Int          @default(0)
+  // Es el 8% del saldo restante
   monto_minimo_puja Int          @default(0)
 
   jugador_grupo_turno Jugador_Grupo_Turno[]

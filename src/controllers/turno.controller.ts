@@ -49,11 +49,14 @@ const establecerPuja = async (req: Request, res: Response) => {
 };
 
 const iniciarUnTurno = async (req: Request, res: Response) => {
-  const { id_juego } = req.params;
+  const { id_juego, id_turno } = req.params;
+  const { tiempo_puja_seg } = req.body;
 
   if (id_juego) {
-    const turno = await iniciarTurno(parseInt(id_juego));
-    await notificarInicioOfertas(parseInt(id_juego));
+    const turno = await iniciarTurno(
+      parseInt(id_juego),
+      parseInt(tiempo_puja_seg)
+    );
 
     response(res, HttpStatusCodes200.OK, { turno });
   } else {

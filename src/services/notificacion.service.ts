@@ -32,6 +32,7 @@ import {
   obtenerJugadores,
   obtenerJugadoresDeJuego,
 } from "./jugador.service";
+import { obtenerTurnoPorId } from "./turno.service";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -334,15 +335,20 @@ function sendFcmMessage(fcmMessage: Object) {
   });
 }
 
-export const notificarInicioOfertas = async (id_juego: number) => {
+export const notificarInicioOfertas = async (
+  id_juego: number,
+  id_turno: number
+) => {
   const juego = await obtenerJuego(id_juego);
+  const turno = await obtenerTurnoPorId(id_turno);
   const jugadores: Jugadores[] = await obtenerJugadoresDeJuego(id_juego);
+
   let resp: { jugador: string; enviado: boolean; mensaje?: string }[] = [];
 
-  if (juego && jugadores.length > 0) {
+  if (juego && turno && jugadores.length > 0) {
     const fecha_fin = sumarSegundosAFecha(
-      juego.fecha_inicio_puja,
-      juego.tiempo_puja_seg
+      turno.fecha_inicio_puja,
+      turno.tiempo_puja_seg
     );
 
     jugadores.forEach((jugador) => {
@@ -353,7 +359,7 @@ export const notificarInicioOfertas = async (id_juego: number) => {
           juego.id,
           jugador.id,
           fecha_fin,
-          juego.tiempo_puja_seg
+          turno.tiempo_puja_seg
         );
 
         sendFcmMessage(message);
@@ -420,7 +426,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
   const turno = await prisma.turnos.findMany({
     where: {
       id_juego,
-      estado_turno: "Tiempo_Ofertas",
+      estado_turno: "TiempoOfertas",
     },
   });
 

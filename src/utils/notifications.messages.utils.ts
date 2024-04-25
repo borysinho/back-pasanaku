@@ -60,10 +60,9 @@ export const defaultFinOfertas = (
 ) => {
   const mensaje: string =
     monto_puja === 0
-      ? `No se recibieron ofertas para el turno. 
-El ganador del turno aleatoriamente es  ${nombre_ganador}. 
+      ? `${nombre_ganador} ha ganado aleatoriamente el turno. 
 ¡Felicidades!`
-      : `El ganador del turno es ${nombre_ganador} con ${monto_puja} ${moneda}.
+      : `${nombre_ganador} ha ganado el turno con ${monto_puja} ${moneda}.
 ¡Felicidades!`;
   const message: TFBMessage = {
     token,

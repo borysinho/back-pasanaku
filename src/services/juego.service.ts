@@ -38,17 +38,23 @@ const existeNombreJuegoEnJugador = async (
   }
 };
 
+export const actualizarJuego = async (
+  id_juego: number,
+  data: Prisma.JuegosUpdateInput
+) => {
+  const juego = prisma.juegos.update({
+    where: {
+      id: id_juego,
+    },
+    data,
+  });
+
+  return juego;
+};
+
 export const crearJuego = async (
   id: number,
   payLoad: Prisma.JuegosCreateInput
-  // {
-  //   nombre,
-  //   fecha_inicio,
-  //   monto_total,
-  //   moneda,
-  //   lapso_turnos_dias,
-  //   tiempo_puja_seg,
-  // }: Prisma.JuegosCreateInput
 ) => {
   const fecha_inicio = new Date(payLoad.fecha_inicio);
   const existeNombreDeJuego = await existeNombreJuegoEnJugador(
@@ -61,7 +67,7 @@ export const crearJuego = async (
     estado_juego: "Nuevo",
     fecha_inicio,
     cant_jugadores: 1,
-    saldo_restante: payLoad.monto_total,
+    // saldo_restante: payLoad.monto_total,
   };
 
   if (!existeNombreDeJuego) {
@@ -70,16 +76,6 @@ export const crearJuego = async (
         jugador: { connect: { id } },
         juego: {
           create: updatedPayLoad,
-          // create: {
-          //   nombre,
-          //   fecha_inicio: date,
-          //   monto_total,
-          //   moneda,
-          //   estado_juego: "Nuevo",
-          //   cant_jugadores: 1,
-          //   lapso_turnos_dias,
-          //   tiempo_puja_seg,
-          // },
         },
         rol: "Creador",
       },
@@ -198,7 +194,7 @@ export const aceptarInvitacion = async (
   }
 };
 
-export const actualizarJuego = async (
+export const actualizarJugadorJuego = async (
   id_jugador: number,
   id_juego: number,
   { nombre, fecha_inicio, monto_total, moneda }: Prisma.JuegosUpdateInput

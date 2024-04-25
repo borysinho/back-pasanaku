@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import { EstadoInvitacion, Prisma } from "@prisma/client";
 import {
-  actualizarJuego,
   crearJuego,
   eliminarJuegoDeUnCreador,
   obtenerJuegos,
   obtenerJuegosConEstado,
   obtenerJuegosDeJugador,
   obtenerJuego,
+  actualizarJugadorJuego,
 } from "../services/juego.service";
 import { HttpStatusCodes200, HttpStatusCodes400, response } from "../utils";
 import { catchedAsync } from "../exceptions";
@@ -48,7 +48,7 @@ const actualizarJuegoDeCreador = async (req: Request, res: Response) => {
   const { id_jugador, id_juego } = req.params;
   const { nombre, fecha_inicio, monto_total, moneda } = req.body;
   const date = new Date(fecha_inicio);
-  const juego = await actualizarJuego(
+  const juego = await actualizarJugadorJuego(
     parseInt(id_jugador),
     parseInt(id_juego),
     {

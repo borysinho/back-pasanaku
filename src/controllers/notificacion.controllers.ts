@@ -38,9 +38,12 @@ const enviarCorreoYWhatsAppAInvitados = async (req: Request, res: Response) => {
 };
 
 const inicioDeOfertas = async (req: Request, res: Response) => {
-  const { id_juego } = req.params;
+  const { id_juego, id_turno } = req.params;
   if (id_juego) {
-    const ofertas = await notificarInicioOfertas(parseInt(id_juego));
+    const ofertas = await notificarInicioOfertas(
+      parseInt(id_juego),
+      parseInt(id_turno)
+    );
     console.log({ ofertas });
     response(res, HttpStatusCodes200.ACCEPTED, ofertas);
   } else {
@@ -49,9 +52,6 @@ const inicioDeOfertas = async (req: Request, res: Response) => {
       "Se esperaba id_juego"
     );
   }
-  // const push = enviarNotificacionPush(
-  //
-  // );
 };
 
 const finDeOfertas = async (req: Request, res: Response) => {
