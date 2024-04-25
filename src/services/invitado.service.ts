@@ -44,7 +44,7 @@ export const crearInvitado = async (
       invitado.id_invitado
     );
 
-    console.log({ cuentaJugadorInvitado });
+    // console.log({ cuentaJugadorInvitado });
     const cuentaJugadorCreador = await obtenerJugador(id_jugador_creador);
 
     if (cuentaJugadorInvitado && cuentaJugadorCreador) {
