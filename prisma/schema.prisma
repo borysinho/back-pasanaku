@@ -91,7 +91,7 @@ model Turnos {
   estado_turno      EstadoTurnos @default(TiempoOfertas)
   fecha_turno       DateTime?    @default(now())
   fecha_inicio_puja DateTime     @default(now())
-  tiempo_puja_seg   Int          @default(120)
+  tiempo_puja_seg   Int          @default(240)
   nro_turno         Int          @default(1)
   // El saldo restante es el monto_base_de_cada_turno * cantidad_turnos_restantes (incluido el actual) 
   saldo_restante    Int          @default(0)
