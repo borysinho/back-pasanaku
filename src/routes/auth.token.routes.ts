@@ -1,5 +1,7 @@
-import { Router } from "express";
+import { Request, Response, Router } from "express";
 import authController from "../controllers/auth.token.controller";
+import { execSync } from "child_process";
+import { response } from "../utils";
 
 class AuthToken {
   router = Router();
