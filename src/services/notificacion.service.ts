@@ -109,7 +109,7 @@ const acceptedOrRejectedToString = (value: (string | Mail.Address)[]) => {
 };
 
 export const notificarPorCorreo = async (
-  idsInvitados: [],
+  idsInvitados: { id: number }[],
   id_Juego: number
 ) => {
   const linkApp = process.env.LINK_APP || "";
@@ -188,7 +188,7 @@ const enviarMensajeWhatsapp = async (para: string) => {
 
 export const notificarPorWhatsapp = async (
   idJuego: number,
-  idsInvitados: []
+  idsInvitados: { id: number }[]
 ) => {
   let resp: any = [];
   try {
@@ -521,7 +521,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       });
 
       // Si tienen un token para notificaciones las enviamos
-      if (jugador.client_token) {
+      if (jugador.client_token && jugador_ganador !== null) {
         const message = defaultFinOfertas(
           jugador.client_token,
           id_juego,

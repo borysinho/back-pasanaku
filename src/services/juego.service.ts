@@ -301,37 +301,27 @@ export const obtenerJuegos = async () => {
 export const obtenerJuegosDeJugador = async (id_jugador: number) => {
   const jugador = await existeId(id_jugador);
 
-  if (jugador) {
-    const juegos = await prisma.juegos.findMany({
-      where: {
-        jugadores_juegos: {
-          some: {
-            id_jugador,
-          },
+  const juegos = await prisma.jugadores.findMany({
+    where: {
+      jugadores_juegos: {
+        some: {
+          id_jugador,
         },
       },
-      include: {
-        jugadores_juegos: {
-          include: {
-            jugador: {
-              select: {
-                id: true,
-                usuario: true,
-                nombre: true,
-              },
-            },
-          },
+    },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      jugadores_juegos: {
+        include: {
+          juego: true,
         },
       },
-    });
+    },
+  });
 
-    return juegos;
-  } else {
-    throw new HttpException(
-      HttpStatusCodes400.BAD_REQUEST,
-      "No un jugador asociado al ID especificado"
-    );
-  }
+  return juegos;
 };
 
 const obtenerCreadorDeJuego = async (id_juego: number) => {

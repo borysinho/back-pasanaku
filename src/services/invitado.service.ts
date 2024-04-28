@@ -1,71 +1,222 @@
 import { Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
 import { obtenerJuego } from "./juego.service";
-import { HttpStatusCodes400, defaultInvitacionAJuego } from "../utils";
+import {
+  HttpStatusCodes400,
+  defaultInvitacionAJuego,
+  fechaHoraActual,
+} from "../utils";
 import { HttpException } from "../exceptions";
 import {
   obtenerCuentaCreadaDeUnInvitado,
   obtenerJugador,
 } from "./jugador.service";
-import { sendFcmMessage } from "./notificacion.service";
+import {
+  notificarPorCorreo,
+  notificarPorWhatsapp,
+  sendFcmMessage,
+} from "./notificacion.service";
 
-export const crearInvitado = async (
+export const existeInvitadoJuego = async (
   id_juego: number,
-  id_jugador_creador: number,
   correo: string,
-  telf: string,
-  nombre_invitado: string
+  telf: string
 ) => {
+  const invitado = await buscarInvitado(correo, telf);
   const juego = await obtenerJuego(id_juego);
 
-  if (juego) {
-    const invitado = await prisma.invitados_Juegos.create({
-      data: {
-        nombre_invitado,
-        juego: { connect: { id: id_juego } },
-        invitado: {
-          connectOrCreate: {
-            where: {
-              correo,
-              telf,
-            },
-            create: {
-              correo,
-              telf,
-            },
-          },
+  if (invitado && juego) {
+    const invitado_juego = await prisma.invitados_Juegos.findUnique({
+      where: {
+        id: {
+          id_invitado: invitado.id,
+          id_juego: juego.id,
         },
       },
     });
 
-    console.log({ invitado });
+    return { invitado, juego, invitado_juego };
+  } else {
+    return { invitado, juego, invitado_juego: null };
+  }
+};
 
-    const cuentaJugadorInvitado = await obtenerCuentaCreadaDeUnInvitado(
-      invitado.id_invitado
-    );
+export const buscarCorreo = async (correo: string) => {
+  const invitado = await prisma.invitados.findUnique({
+    where: {
+      correo,
+    },
+  });
 
-    // console.log({ cuentaJugadorInvitado });
-    const cuentaJugadorCreador = await obtenerJugador(id_jugador_creador);
+  return invitado;
+};
 
-    if (cuentaJugadorInvitado && cuentaJugadorCreador) {
-      const message = defaultInvitacionAJuego(
-        id_juego,
-        cuentaJugadorInvitado.id,
-        juego.nombre,
-        cuentaJugadorCreador.nombre,
-        cuentaJugadorInvitado.client_token
-      );
+export const buscarTelefono = async (telf: string) => {
+  const invitado = await prisma.invitados.findUnique({
+    where: {
+      telf,
+    },
+  });
 
-      sendFcmMessage(message);
+  return invitado;
+};
+
+const auxUpSertInvitados = async (
+  nombre_invitado: string,
+  correo: string,
+  telf: string,
+  id_juego: number,
+  id_invitado: number = 0
+  // data: Prisma.InvitadosCreateInput
+) => {
+  // ACtualiza un invitado, caso contraro lo crea y también conecta al detalle en caso que exista caso contrario lo crea
+
+  const invitado = await prisma.invitados.upsert({
+    where: {
+      id: id_invitado,
+    },
+    update: {
+      telf,
+      correo,
+    },
+    create: {
+      telf,
+      correo,
+      invitados_juegos: {
+        connectOrCreate: {
+          where: {
+            id: {
+              id_invitado,
+              id_juego,
+            },
+          },
+          create: {
+            id_juego,
+            nombre_invitado,
+            fecha: fechaHoraActual(),
+          },
+        },
+      },
+    },
+  });
+
+  return invitado;
+};
+
+const upSertInvitadosJuegos = async (
+  id_juego: number,
+  nombre_invitado: string,
+  correo: string,
+  telf: string
+) => {
+  // El juego debe estar creado previamente
+  const juego = await obtenerJuego(id_juego);
+  if (juego) {
+    const invitado_correo = await buscarCorreo(correo);
+    const invitado_telf = await buscarTelefono(telf);
+
+    // Si el correo y el telefono ya están registrados previamente en otra invitación, entonces ambos deben coincidir en una misma invitación
+    if (invitado_correo && invitado_telf) {
+      console.log("invitado_correo && invitado_telf EXISTEN");
+      if (invitado_correo.id === invitado_telf.id) {
+        // Si coinciden, conectamos el registro del invitado con un registro nuevo de detalle entre invitados y juegos
+        console.log(
+          "invitado_correo.id === invitado_telf.id SON IGUALES, el invitado YA EXISTE y se procede a crear el detalle o conectar a uno existente"
+        );
+        return await auxUpSertInvitados(
+          nombre_invitado,
+          correo,
+          telf,
+          id_juego,
+          invitado_correo.id
+        );
+      } else {
+        // Existen tanto el correo como el teléfono pero ya están previamente registrados en invitaciones distintas
+        throw new HttpException(
+          HttpStatusCodes400.NOT_ACCEPTABLE,
+          "El correo y teléfono especificados ya se encuentran registrados previamente, pero en invitaciones distintas."
+        );
+      }
+    } else {
+      // Puede existir el correo o puede existir el teléfono
+      // Si existe solo el teléfono registrado en una invitación pero no el correo, generamos un error
+      if (invitado_telf) {
+        throw new HttpException(
+          HttpStatusCodes400.NOT_ACCEPTABLE,
+          "El teléfono ya se encuentra registrado en otra invitación. Proveer un nro. de teléfono distinto o proveer el mismo correo del nro. de teléfono previamente registrado"
+        );
+      } else {
+        // Si existe solo el correo registrado en una invitación pero no el teléfono, generamos un error
+        if (invitado_correo) {
+          throw new HttpException(
+            HttpStatusCodes400.NOT_ACCEPTABLE,
+            "El correo ya se encuentra registrado en otra invitación. Proveer correo distinto o proveer el mismo nro. de teléfono del correo previamente registrado"
+          );
+        } else {
+          // No existe ni el correo ni el teléfono, entonces registramos el invitado enviando el id_invitado = 0 para que no coincida y lo cree al invitado
+          console.log(
+            "invitado_correo.id !== invitado_telf.id NO EXISTE ni el correo ni el teléfono previamente registrado. Se procede a crear el INVITADO y a crear el DETALLE entre invitados y juegos"
+          );
+          return await auxUpSertInvitados(
+            nombre_invitado,
+            correo,
+            telf,
+            id_juego
+          );
+        }
+      }
     }
-
-    return invitado;
   } else {
     throw new HttpException(
-      HttpStatusCodes400.BAD_REQUEST,
-      "No existe un juego asociado al ID especificado"
+      HttpStatusCodes400.NOT_ACCEPTABLE,
+      "El juego especificado no existe"
     );
   }
+};
+
+// const enviarNotificacionPush = async (
+//   id_invitado: number,
+//   id_jugador_creador: number
+// ) => {
+//   // Obtenemos la cuenta del jugador al que se le invitó
+//   // Si el jugador_creador existe y además el jugador_invitado ya se ha creado cuenta, entonces enviar notificación
+//   // Caso contrario:
+//   // Si el jugador_creador no existe, es porque el cliente envió incorrectamente los datos y debería retornar una excepción
+//   // Si el jugador_invitado no se ha creado cuenta, se debería enviar las notificaciones para descargar el juego
+
+//   const cuentaJugadorInvitado = await obtenerCuentaCreadaDeUnInvitado(
+//     id_invitado
+//   );
+//   const cuentaJugadorCreador = await obtenerJugador(id_jugador_creador);
+//   console.log({ cuentaJugadorInvitado, cuentaJugadorCreador });
+
+//   if (cuentaJugadorCreador && ) {
+
+//   } else {
+
+//   }
+
+//   if (cuentaJugadorInvitado && cuentaJugadorCreador) {
+//     const message = defaultInvitacionAJuego(
+//       id_juego,
+//       cuentaJugadorInvitado.id,
+//       juego.nombre,
+//       cuentaJugadorCreador.nombre,
+//       cuentaJugadorInvitado.client_token
+//     );
+
+//     sendFcmMessage(message);
+//   }
+// };
+
+export const crearInvitado = async (
+  id_juego: number,
+  correo: string,
+  telf: string,
+  nombre_invitado: string
+) => {
+  console.log({ id_juego, correo, telf, nombre_invitado });
+  return await upSertInvitadosJuegos(id_juego, nombre_invitado, correo, telf);
 };
 
 export const obtenerInvitado = async (id: number) => {
@@ -130,7 +281,9 @@ export const eliminarInvitado = async (id: number) => {
   });
 };
 
-export const obtenerCorreosInvitados = async (idsInvitados: []) => {
+export const obtenerCorreosInvitados = async (
+  idsInvitados: { id: number }[]
+) => {
   const arrIds: any = [];
   for (const element of idsInvitados) {
     const { id: id_invitado } = element;
@@ -158,7 +311,9 @@ export const obtenerCorreosInvitados = async (idsInvitados: []) => {
   return correos;
 };
 
-export const obtenerTelefonosInvitados = async (idsInvitados: []) => {
+export const obtenerTelefonosInvitados = async (
+  idsInvitados: { id: number }[]
+) => {
   const arrIds: any = [];
   for (const element of idsInvitados) {
     const { id: id_invitado } = element;

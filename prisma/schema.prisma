@@ -41,7 +41,7 @@ model Invitados {
   correo           String             @unique
   telf             String             @unique
   invitados_juegos Invitados_Juegos[]
-  jugadores        Jugadores[]
+  jugadores        Jugadores?
 }
 
 enum EstadoNotificacion {
@@ -57,11 +57,11 @@ enum EstadoInvitacion {
 }
 
 model Invitados_Juegos {
-  id_invitado Int
-  id_juego    Int
-
   invitado Invitados @relation(fields: [id_invitado], references: [id], onDelete: Cascade)
   juego    Juegos    @relation(fields: [id_juego], references: [id], onDelete: Cascade)
+
+  id_invitado Int
+  id_juego    Int
 
   estado_invitacion            EstadoInvitacion   @default(Pendiente)
   estado_notificacion_whatsapp EstadoNotificacion @default(EnvioIncorrecto)

@@ -22,17 +22,24 @@ import {
 import { aceptarInvitacion } from "../services";
 
 const crear = async (req: Request, res: Response) => {
-  const { id_juego, id_jugador_creador } = req.params;
+  const { id_juego } = req.params;
   const { telf, correo, nombre } = req.body;
-  console.log({ id_juego, id_jugador_creador, telf, correo, nombre });
-  const invitado = await crearInvitado(
-    parseInt(id_juego),
-    parseInt(id_jugador_creador),
-    correo,
-    telf,
-    nombre
-  );
-  response(res, HttpStatusCodes200.OK, invitado);
+  if (id_juego && telf && correo && nombre) {
+    // console.log({ id_juego, id_jugador_creador, telf, correo, nombre });
+
+    const invitado = await crearInvitado(
+      parseInt(id_juego),
+      correo,
+      telf,
+      nombre
+    );
+    response(res, HttpStatusCodes200.OK, invitado);
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Se esperaban mas parámetros para poder ejecutar la petición."
+    );
+  }
 };
 
 const mostrarUno = async (req: Request, res: Response) => {
