@@ -139,11 +139,14 @@ export const aceptarInvitacion = async (
 
   console.log({ existeJugadorJuego, existeInvitadoJuego });
 
+  // Si el jugador no ha aceptado la partida antes (no está en jugadores_juegos) y además la invitación está en estado "Pendiente"
   if (
     existeJugadorJuego.length === 0 &&
     existeInvitadoJuego &&
     existeInvitadoJuego.estado_invitacion === "Pendiente"
   ) {
+    // Si no forma parte del juego
+    // Hacemos ingresar al jugador
     const jugadorJuego = await prisma.jugadores_Juegos.create({
       data: {
         estado: "Participando",
@@ -170,8 +173,8 @@ export const aceptarInvitacion = async (
         id: id_juego,
       },
     });
-    console.log({ jugadorJuego });
 
+    console.log({ jugadorJuego });
     //Actualizamos el estado de la invitación
     const invitados_juegos = await prisma.invitados_Juegos.update({
       where: {
@@ -184,7 +187,7 @@ export const aceptarInvitacion = async (
         estado_invitacion: "Aceptado",
       },
     });
-    console.log({ invitados_juegos });
+    console.log({ invitacion_actualizada: invitados_juegos });
 
     return { jugador_juego: jugadorJuego, invitado_juego: invitados_juegos };
   } else {

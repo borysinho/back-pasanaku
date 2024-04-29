@@ -4,20 +4,8 @@ import {
   notificarDescargarOUnirse,
   notificarGanadorDeTurno,
   notificarInicioOfertas,
-  notificarPorCorreo,
-  notificarPorWhatsapp,
 } from "../services/notificacion.service";
 import { HttpStatusCodes200, HttpStatusCodes400, response } from "../utils";
-
-const enviarCorreo = async (id_juego: number, idsInvitados: []) => {
-  const mensajesCorreo = await notificarPorCorreo(idsInvitados, id_juego);
-
-  if (mensajesCorreo instanceof HttpException) {
-    return { mailResult: mensajesCorreo.getAttr() };
-  } else {
-    return mensajesCorreo;
-  }
-};
 
 const notificacionParaDescargarOUnirse = async (
   req: Request,
