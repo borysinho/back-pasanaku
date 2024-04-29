@@ -11,7 +11,7 @@ class JugadorRoutes {
   intializeRoutes() {
     this.router.post(
       "/jugadores/juegos/:id/notificaciones",
-      notificacionesController.enviarCorreoYWhatsAppAInvitados
+      notificacionesController.notificacionParaDescargarOUnirse
     );
 
     this.router.post(

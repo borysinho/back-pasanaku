@@ -101,7 +101,10 @@ export const buscarJugadorJuegoPorId = async (id_jugador_juego: number) => {
   return jugador_juego;
 };
 
-const buscarJugadorJuego = async (id_juego: number, id_jugador: number) => {
+export const buscarJugadorJuego = async (
+  id_juego: number,
+  id_jugador: number
+) => {
   const jugador_juego = await prisma.jugadores_Juegos.findMany({
     where: {
       id_juego,
@@ -324,7 +327,7 @@ export const obtenerJuegosDeJugador = async (id_jugador: number) => {
   return juegos;
 };
 
-const obtenerCreadorDeJuego = async (id_juego: number) => {
+export const obtenerCreadorDeJuego = async (id_juego: number) => {
   const creador = await prisma.jugadores.findFirst({
     where: {
       jugadores_juegos: {
@@ -335,6 +338,8 @@ const obtenerCreadorDeJuego = async (id_juego: number) => {
       },
     },
   });
+
+  return creador;
 };
 
 export const obtenerJuegosConEstado = async (

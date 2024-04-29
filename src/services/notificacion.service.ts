@@ -23,17 +23,24 @@ import {
   sumarSegundosAFecha,
   formatearTiempo,
   defaultFinOfertas,
+  defaultInvitacionAJuego,
 } from "../utils";
 import Mail from "nodemailer/lib/mailer";
 
 import { defaultInicioOfertas } from "../utils";
 import {
+  obtenerCuentaCreadaDeUnInvitado,
   obtenerJugador,
   obtenerJugadores,
   obtenerJugadoresDeJuego,
 } from "./jugador.service";
 import { obtenerTurnoPorId } from "./turno.service";
-import { obtenerJuego } from "./juego.service";
+import {
+  buscarJugadorJuego,
+  buscarJugadorJuegoPorId,
+  obtenerCreadorDeJuego,
+  obtenerJuego,
+} from "./juego.service";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -230,6 +237,143 @@ export const notificarPorWhatsapp = async (
     resp.push(myError.getAttr());
     return { whatsAppResult: resp };
   }
+};
+
+const notificarUnirseAJuegoPush = async (
+  id_juego: number,
+  idsInvitados: { id: number }[]
+) => {
+  const juego = await obtenerJuego(id_juego);
+
+  let resp: { jugador: string; enviado: boolean; mensaje?: string }[] = [];
+  if (juego) {
+    // idsInvitados.forEach(async (value) => {
+
+    for (const id in idsInvitados) {
+      if (Object.prototype.hasOwnProperty.call(idsInvitados, id)) {
+        const value = idsInvitados[id];
+
+        // Con validaciones previas, asumimos que todos los ID's obtenidos por parámetros corresponden únicamente a ID's de usuarios que ya se han creado cuenta pero que no se han unido a un juego
+
+        // Obtenemos la cuenta del jugador
+        const cuentaJugador = await obtenerCuentaCreadaDeUnInvitado(value.id);
+
+        // Si existe la cuenta del jugador y además existe el token de firebase
+        if (cuentaJugador && cuentaJugador.client_token !== "") {
+          // Buscamos el creador del juego desde el ID del juego
+          const cuentaCreador = await obtenerCreadorDeJuego(juego.id);
+
+          // Si obtenemos el creador del juego, podemos enviar la notificación
+          if (cuentaCreador) {
+            const message = defaultInvitacionAJuego(
+              juego.id,
+              cuentaJugador.id,
+              juego.nombre,
+              cuentaCreador.nombre,
+              cuentaJugador.client_token
+            );
+            sendFcmMessage(message);
+            resp.push({
+              jugador: cuentaJugador.nombre,
+              enviado: true,
+            });
+          } else {
+            resp.push({
+              enviado: false,
+              jugador: cuentaJugador.nombre,
+              mensaje: `No se encontró la cuenta del creador del juego. Juego.ID: ${juego.id}`,
+            });
+          }
+        } else {
+          if (!cuentaJugador) {
+            resp.push({
+              enviado: true,
+              jugador: `invidato.id: ${value.id}`,
+              mensaje: `No se encontró la cuenta del jugador con el ID de invitado: ${value.id} `,
+            });
+          } else {
+            // cuentaJugador.client_token === ""; el token de FireBase está vacío
+            resp.push({
+              enviado: true,
+              jugador: cuentaJugador.nombre, // `invidato.id: ${value.id}`,
+              mensaje: `El jugador se ha creado una cuenta pero no tiene un token de FireBase asignado: ${value.id} `,
+            });
+          }
+        }
+      }
+    }
+    // });
+  } else {
+    resp.push({
+      enviado: true,
+      jugador: `juego.id: ${id_juego}`, // `invidato.id: ${value.id}`,
+      mensaje: `No se encuentra el juego para el ID ${id_juego} `,
+    });
+  }
+  return resp;
+};
+
+export const notificarDescargarOUnirse = async (
+  id_juego: number,
+  idsInvitados: { id: number }[]
+) => {
+  // Separamos en listas diferentes los invitados a los que se les debe notificar que se descarguen la aplicación por Correo y WhatsApp y a los usuarios que se les debe notificar para que se unan a una partida mendiante una notificación Push
+
+  let unirse: { id: number }[] = [];
+  let descargar: { id: number }[] = [];
+
+  console.log({ id_juego, idsInvitados });
+
+  // idsInvitados.forEach(async (value) => {
+  for (const id in idsInvitados) {
+    // console.log({ id });
+    const value = idsInvitados[id];
+    // console.log({ value });
+    const jugador = await obtenerCuentaCreadaDeUnInvitado(value.id);
+    // console.log({ jugador });
+    if (jugador) {
+      // Si existe el jugador y además NO existe el detalle entre jugador y juego (NO se ha unido al juego)
+      const jugador_juego = await buscarJugadorJuego(id_juego, jugador.id);
+      // console.log({ jugador_juego });
+      if (jugador_juego.length === 0) {
+        // Adicionamos el ID invitado a la lista de ID's para unirse
+        unirse.push(value);
+        // console.log({ unirse });
+      } else {
+        // Existe la cuenta del jugador y además ya se ha unido, no hacemos nada
+      }
+    } else {
+      // El invitado aún no se ha creado cuenta, se adiciona el ID invitado a la lista de ID's para descargar
+      descargar.push(value);
+      // console.log({ descargar });
+    }
+  }
+
+  let mensajesCorreo = null;
+  let mensajesWhatsapp = null;
+
+  console.log({ descargar, unirse });
+
+  // Obtenemos la respuesta del envío de notificaciones por correo
+  if (descargar.length > 0) {
+    const respCorreo = await notificarPorCorreo(descargar, id_juego);
+    mensajesCorreo =
+      respCorreo instanceof HttpException
+        ? { mailResult: respCorreo.getAttr() }
+        : respCorreo;
+
+    // Obtenemos la respuesta del envío de notificaciones por WhatsApp
+    mensajesWhatsapp = await notificarPorWhatsapp(id_juego, descargar);
+  }
+  console.log({ mensajesCorreo, mensajesWhatsapp });
+
+  let pushUnirse = null;
+  if (unirse.length > 0) {
+    pushUnirse = await notificarUnirseAJuegoPush(id_juego, unirse);
+  }
+
+  console.log({ pushUnirse });
+  return { mensajesCorreo, mensajesWhatsapp, pushUnirse };
 };
 
 const actualizarEstadosWhatsApp = async (
