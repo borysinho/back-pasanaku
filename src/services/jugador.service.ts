@@ -36,7 +36,13 @@ export const crearJugadorSinSerInvitado = async (
 
 // export const crearJugadorRelacionandoAInvitado = async (
 export const crearJugadorAPartirDeInvitacion = async (
-  { nombre, usuario, contrasena, client_token }: Prisma.JugadoresCreateInput,
+  {
+    nombre,
+    usuario,
+    contrasena,
+    client_token,
+    qr,
+  }: Prisma.JugadoresCreateInput,
   { telf, correo }: Prisma.InvitadosCreateInput
 ) => {
   const invitadoBuscado = await buscarInvitado(correo, telf);
@@ -48,6 +54,7 @@ export const crearJugadorAPartirDeInvitacion = async (
         usuario,
         contrasena,
         client_token,
+        qr,
         invitado: {
           connect: {
             correo,
@@ -61,6 +68,7 @@ export const crearJugadorAPartirDeInvitacion = async (
         nombre: true,
         usuario: true,
         invitado: true,
+        qr: true,
       },
     });
 
@@ -82,6 +90,7 @@ export const obtenerJugador = async (id: number) => {
       usuario: true,
       invitado: true,
       client_token: true,
+      qr: true,
     },
   });
 
@@ -95,6 +104,7 @@ export const obtenerJugadores = async () => {
       nombre: true,
       usuario: true,
       invitado: true,
+      qr: true,
     },
   });
 
@@ -127,6 +137,7 @@ export const actualizarJugador = async (
         id: true,
         nombre: true,
         usuario: true,
+        qr: true,
         invitado: true,
       },
     });
@@ -151,6 +162,7 @@ export const eliminarJugador = async (id: number) => {
         id: true,
         nombre: true,
         usuario: true,
+        qr: true,
         invitado: true,
       },
     });
@@ -195,6 +207,7 @@ export const existeId = async (id: number) => {
       id: true,
       nombre: true,
       usuario: true,
+      qr: true,
       invitado: true,
     },
   });
@@ -235,6 +248,7 @@ export const obtenerCuentaCreadaDeUnInvitado = async (id_invitado: number) => {
       usuario: true,
       invitado: true,
       client_token: true,
+      qr: true,
     },
   });
 
@@ -250,6 +264,7 @@ export const existeUsuario = async (usuario: string) => {
       id: true,
       nombre: true,
       usuario: true,
+      qr: true,
     },
   });
 
@@ -270,6 +285,7 @@ export const validarCuenta = async ({
       nombre: true,
       usuario: true,
       client_token: true,
+      qr: true,
     },
   });
 
@@ -301,6 +317,13 @@ export const actualizarTokenFireBase = async (
     },
     data: {
       client_token,
+    },
+    select: {
+      id: true,
+      nombre: true,
+      usuario: true,
+      client_token: true,
+      qr: true,
     },
   });
 

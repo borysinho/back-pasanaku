@@ -30,7 +30,7 @@ export const crearTurno = async (
 };
 
 export const obtenerPujas = async () => {
-  const pujas = prisma.jugador_Grupo_Turno.findMany({});
+  const pujas = prisma.pujas.findMany({});
 
   return pujas;
 };
@@ -100,7 +100,7 @@ const actuacrearJugador_Grupo_Turno = async (
   id_jugador_juego: number,
   monto_puja: number
 ) => {
-  const jugador_grupo_turno = await prisma.jugador_Grupo_Turno.upsert({
+  const jugador_grupo_turno = await prisma.pujas.upsert({
     where: {
       id: {
         id_turno,

@@ -591,7 +591,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     const id_turno = turno[0].id;
 
     // Obtenemos la primera de todas las pujas ordenado de mayor a menor
-    const jugador_grupo_turno = await prisma.jugador_Grupo_Turno.findFirst({
+    const jugador_grupo_turno = await prisma.pujas.findFirst({
       where: {
         id_turno,
       },

@@ -98,7 +98,7 @@ model Turnos {
   // Es el 8% del saldo restante
   monto_minimo_puja Int          @default(0)
 
-  jugador_grupo_turno Jugador_Grupo_Turno[]
+  jugador_grupo_turno Pujas[]
 }
 
 model Jugadores {
@@ -110,9 +110,10 @@ model Jugadores {
   jugadores_juegos Jugadores_Juegos[]
 
   nombre       String
-  usuario      String @unique
+  usuario      String  @unique
   contrasena   String
-  client_token String @default("")
+  client_token String  @default("")
+  qr           String?
 }
 
 enum Roles {
@@ -139,11 +140,11 @@ model Jugadores_Juegos {
 
   fecha_ingreso DateTime? @default(now())
 
-  jugador_grupo_turno Jugador_Grupo_Turno[]
+  jugador_grupo_turno Pujas[]
   Turnos              Turnos[]
 }
 
-model Jugador_Grupo_Turno {
+model Pujas {
   jugadores_juegos Jugadores_Juegos @relation(fields: [id_jugador_juego], references: [id], onDelete: NoAction)
   turno            Turnos           @relation(fields: [id_turno], references: [id], onDelete: Cascade)
 
@@ -154,4 +155,5 @@ model Jugador_Grupo_Turno {
   id_turno         Int
 
   @@id(name: "id", [id_jugador_juego, id_turno])
+  @@map("Jugador_Grupo_Turno")
 }
