@@ -662,7 +662,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       jugador_juego_ganador.id_jugador
     );
 
-    // console.log({ jugador_ganador });
+    console.log({ jugador_ganador });
 
     // Actualizamos el ganador del turno
     const turno_ganador = await actualizarGanadorDeTurno(

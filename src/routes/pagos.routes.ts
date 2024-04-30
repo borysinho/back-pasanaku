@@ -1,5 +1,5 @@
 import { Router } from "express";
-import turnoController from "../controllers/turno.controller";
+import pagoController from "../controllers/pago.controllers";
 
 class PagosRoutes {
   router = Router();
@@ -10,11 +10,10 @@ class PagosRoutes {
 
   initializeRoutes() {
     this.router.get(
-      "/jugadores/juegos/turnos/",
-      turnoController.obtenerTodosTurnos
+      "/jugadores/juegos/turnos/:id_turno/jugadores_juegos/:id_jugador_juego/pagos",
+      pagoController.obtenerPagosDeUnTurno
     );
   }
 }
-asdadas;
 
 export default new PagosRoutes().router;

@@ -83,7 +83,7 @@ model Turnos {
   id Int @id @default(autoincrement())
 
   juego                 Juegos            @relation(fields: [id_juego], references: [id], onDelete: Cascade)
-  ganador_jugador_juego Jugadores_Juegos? @relation(fields: [id_ganador_jugador_juego], references: [id], onDelete: Cascade)
+  ganador_jugador_juego Jugadores_Juegos? @relation(fields: [id_ganador_jugador_juego], references: [id], onDelete: NoAction)
 
   id_juego                 Int
   id_ganador_jugador_juego Int?
@@ -92,6 +92,8 @@ model Turnos {
   fecha_turno       DateTime?    @default(now())
   fecha_inicio_puja DateTime     @default(now())
   tiempo_puja_seg   Int          @default(240)
+  fecha_inicio_pago DateTime     @default(now())
+  tiempo_pago_seg   Int          @default(240)
   nro_turno         Int          @default(1)
   // El saldo restante es el monto_base_de_cada_turno * cantidad_turnos_restantes (incluido el actual) 
   saldo_restante    Int          @default(0)
@@ -153,6 +155,8 @@ model Pujas {
 
   id_jugador_juego Int
   id_turno         Int
+
+  // id_turno_ganador Turnos[]
 
   @@id(name: "id", [id_jugador_juego, id_turno])
   @@map("Jugador_Grupo_Turno")
