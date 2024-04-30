@@ -1,0 +1,5 @@
+
+
+const obtenerPagos = async () => {
+  
+}

@@ -36,13 +36,14 @@ export const crearJugadorSinSerInvitado = async (
 
 // export const crearJugadorRelacionandoAInvitado = async (
 export const crearJugadorAPartirDeInvitacion = async (
-  {
-    nombre,
-    usuario,
-    contrasena,
-    client_token,
-    qr,
-  }: Prisma.JugadoresCreateInput,
+  // {
+  //   nombre,
+  //   usuario,
+  //   contrasena,
+  //   client_token,
+  //   qr,
+  // }
+  input: Prisma.JugadoresCreateInput,
   { telf, correo }: Prisma.InvitadosCreateInput
 ) => {
   const invitadoBuscado = await buscarInvitado(correo, telf);
@@ -50,25 +51,13 @@ export const crearJugadorAPartirDeInvitacion = async (
   if (invitadoBuscado) {
     const jugador = await prisma.jugadores.create({
       data: {
-        nombre,
-        usuario,
-        contrasena,
-        client_token,
-        qr,
+        ...input,
         invitado: {
           connect: {
             correo,
             telf,
           },
         },
-      },
-
-      select: {
-        id: true,
-        nombre: true,
-        usuario: true,
-        invitado: true,
-        qr: true,
       },
     });
 

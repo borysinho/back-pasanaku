@@ -385,6 +385,7 @@ Detalles: ${turnosDeJuegoEnOfertasOPagos.toString()}`
       const turnosDeJuego = await obtenerTurnosDeJuego(id_juego);
 
       // Validamos si no llegamos ya al final de los turnos
+      console.log({ turnosDeJuego, cant_jugadores: juego.cant_jugadores });
       if (turnosDeJuego.length === juego.cant_jugadores) {
         throw new HttpException(
           HttpStatusCodes400.BAD_REQUEST,

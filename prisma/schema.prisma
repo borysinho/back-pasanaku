@@ -110,10 +110,10 @@ model Jugadores {
   jugadores_juegos Jugadores_Juegos[]
 
   nombre       String
-  usuario      String  @unique
+  usuario      String @unique
   contrasena   String
-  client_token String  @default("")
-  qr           String?
+  client_token String @default("")
+  qr           String @default("")
 }
 
 enum Roles {
