@@ -228,51 +228,6 @@ export const crearInvitado = async (
   }
 };
 
-// const enviarNotificacionPush = async (
-//   id_invitado: number,
-//   id_jugador_creador: number
-// ) => {
-//   // Obtenemos la cuenta del jugador al que se le invitó
-//   // Si el jugador_creador existe y además el jugador_invitado ya se ha creado cuenta, entonces enviar notificación
-//   // Caso contrario:
-//   // Si el jugador_creador no existe, es porque el cliente envió incorrectamente los datos y debería retornar una excepción
-//   // Si el jugador_invitado no se ha creado cuenta, se debería enviar las notificaciones para descargar el juego
-
-//   const cuentaJugadorInvitado = await obtenerCuentaCreadaDeUnInvitado(
-//     id_invitado
-//   );
-//   const cuentaJugadorCreador = await obtenerJugador(id_jugador_creador);
-//   console.log({ cuentaJugadorInvitado, cuentaJugadorCreador });
-
-//   if (cuentaJugadorCreador && ) {
-
-//   } else {
-
-//   }
-
-//   if (cuentaJugadorInvitado && cuentaJugadorCreador) {
-//     const message = defaultInvitacionAJuego(
-//       id_juego,
-//       cuentaJugadorInvitado.id,
-//       juego.nombre,
-//       cuentaJugadorCreador.nombre,
-//       cuentaJugadorInvitado.client_token
-//     );
-
-//     sendFcmMessage(message);
-//   }
-// };
-
-// export const crearInvitado = async (
-//   id_juego: number,
-//   correo: string,
-//   telf: string,
-//   nombre_invitado: string
-// ) => {
-//   console.log({ id_juego, correo, telf, nombre_invitado });
-//   return await upSertInvitadosJuegos(id_juego, nombre_invitado, correo, telf);
-// };
-
 export const obtenerInvitado = async (id: number) => {
   const invitado = await prisma.invitados.findUnique({
     where: {
