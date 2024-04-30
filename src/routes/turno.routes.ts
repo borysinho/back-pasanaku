@@ -38,10 +38,10 @@ class TurnoRoutes {
       turnoController.establecerPuja
     );
 
-    this.router.delete(
-      "/jugadores/juegos/:id_juego/turnos",
-      turnoController.eliminarTurnosJuego
-    );
+    // this.router.delete(
+    //   "/jugadores/juegos/:id_juego/turnos",
+    //   turnoController.eliminarTurnosJuego
+    // );
   }
 }
 

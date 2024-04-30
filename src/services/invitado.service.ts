@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { EstadoInvitacion, Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
 import { obtenerJuego } from "./juego.service";
 import {
@@ -61,49 +61,88 @@ export const buscarTelefono = async (telf: string) => {
   return invitado;
 };
 
-const auxUpSertInvitados = async (
-  nombre_invitado: string,
-  correo: string,
-  telf: string,
+const upsertInvitadosJuegos = async (
   id_juego: number,
-  id_invitado: number = 0
-  // data: Prisma.InvitadosCreateInput
+  id_invitado: number,
+  estado_invitacion: EstadoInvitacion,
+  nombre_invitado: string
 ) => {
-  // ACtualiza un invitado, caso contraro lo crea y también conecta al detalle en caso que exista caso contrario lo crea
-
-  const invitado = await prisma.invitados.upsert({
+  const invitado = await prisma.invitados_Juegos.upsert({
     where: {
-      id: id_invitado,
+      id: {
+        id_invitado,
+        id_juego,
+      },
     },
     update: {
-      telf,
-      correo,
+      estado_invitacion,
     },
     create: {
-      telf,
-      correo,
-      invitados_juegos: {
-        connectOrCreate: {
-          where: {
-            id: {
-              id_invitado,
-              id_juego,
-            },
-          },
-          create: {
-            id_juego,
-            nombre_invitado,
-            fecha: fechaHoraActual(),
-          },
-        },
-      },
+      id_invitado,
+      id_juego,
+      estado_invitacion: "Pendiente",
+      nombre_invitado,
+    },
+    select: {
+      nombre_invitado: true,
+      estado_invitacion: true,
+      estado_notificacion_correo: true,
+      estado_notificacion_whatsapp: true,
+      periodo: true,
+      fecha: true,
     },
   });
 
   return invitado;
 };
 
-const upSertInvitadosJuegos = async (
+const crearInvitadoEInvitado_Juego = async (
+  id_juego: number,
+  nombre_invitado: string,
+  correo: string,
+  telf: string
+  // data: Prisma.InvitadosCreateInput
+) => {
+  // Creamos el invitado y luego creamos el detalle entre invitados y juegos
+
+  const invitado = await prisma.invitados.create({
+    data: {
+      telf,
+      correo,
+
+      invitados_juegos: {
+        create: {
+          id_juego,
+          nombre_invitado,
+          fecha: fechaHoraActual(),
+        },
+      },
+    },
+    include: {
+      invitados_juegos: true,
+    },
+  });
+
+  return invitado;
+};
+
+export const obtenerInvitadosJuegosPorID = async (
+  id_invitado: number,
+  id_juego: number
+) => {
+  const invitados_juegos = await prisma.invitados_Juegos.findUnique({
+    where: {
+      id: {
+        id_invitado,
+        id_juego,
+      },
+    },
+  });
+
+  return invitados_juegos;
+};
+
+export const crearInvitado = async (
   id_juego: number,
   nombre_invitado: string,
   correo: string,
@@ -123,13 +162,28 @@ const upSertInvitadosJuegos = async (
         console.log(
           "invitado_correo.id === invitado_telf.id SON IGUALES, el invitado YA EXISTE y se procede a crear el detalle o conectar a uno existente"
         );
-        return await auxUpSertInvitados(
-          nombre_invitado,
-          correo,
-          telf,
-          id_juego,
-          invitado_correo.id
+        // Preguntamos si existe el detalle entre invitados y juegos, no existe, lo creamos, caso contrario, no hacemos nada
+        const invitado_juego = await obtenerInvitadosJuegosPorID(
+          invitado_correo.id,
+          id_juego
         );
+
+        // Si el detalle existe, actualizamos el estado de la invitación
+        if (!invitado_juego) {
+          // Si el detalle no existe, lo creamos
+          console.log(
+            "invitado_juego NO EXISTE, se procede a crear el detalle"
+          );
+          return await upsertInvitadosJuegos(
+            id_juego,
+            invitado_correo.id,
+            "Pendiente",
+            nombre_invitado
+          );
+        } else {
+          console.log("invitado_juego EXISTE, no se realiza ninguna acción");
+          return invitado_juego;
+        }
       } else {
         // Existen tanto el correo como el teléfono pero ya están previamente registrados en invitaciones distintas
         throw new HttpException(
@@ -157,11 +211,11 @@ const upSertInvitadosJuegos = async (
           console.log(
             "invitado_correo.id !== invitado_telf.id NO EXISTE ni el correo ni el teléfono previamente registrado. Se procede a crear el INVITADO y a crear el DETALLE entre invitados y juegos"
           );
-          return await auxUpSertInvitados(
+          return await crearInvitadoEInvitado_Juego(
+            id_juego,
             nombre_invitado,
             correo,
-            telf,
-            id_juego
+            telf
           );
         }
       }
@@ -209,15 +263,15 @@ const upSertInvitadosJuegos = async (
 //   }
 // };
 
-export const crearInvitado = async (
-  id_juego: number,
-  correo: string,
-  telf: string,
-  nombre_invitado: string
-) => {
-  console.log({ id_juego, correo, telf, nombre_invitado });
-  return await upSertInvitadosJuegos(id_juego, nombre_invitado, correo, telf);
-};
+// export const crearInvitado = async (
+//   id_juego: number,
+//   correo: string,
+//   telf: string,
+//   nombre_invitado: string
+// ) => {
+//   console.log({ id_juego, correo, telf, nombre_invitado });
+//   return await upSertInvitadosJuegos(id_juego, nombre_invitado, correo, telf);
+// };
 
 export const obtenerInvitado = async (id: number) => {
   const invitado = await prisma.invitados.findUnique({

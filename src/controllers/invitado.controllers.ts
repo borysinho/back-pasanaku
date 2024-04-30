@@ -29,9 +29,9 @@ const crear = async (req: Request, res: Response) => {
 
     const invitado = await crearInvitado(
       parseInt(id_juego),
+      nombre,
       correo,
-      telf,
-      nombre
+      telf
     );
     response(res, HttpStatusCodes200.OK, invitado);
   } else {
