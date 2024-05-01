@@ -120,10 +120,7 @@ const actuacrearJugador_Grupo_Turno = async (
   return jugador_grupo_turno;
 };
 
-const habilitadoParaPujar = async (
-  id_jugador_juego: number,
-  id_turno: number
-) => {
+const habilitadoParaPujar = async (id_jugador_juego: number) => {
   // La idea principal de esta función es verificar si el jugador ya ha ganado el turno previamente. Si es así, no podrá pujar nuevamente.
   // Para ello, se debe verificar si existe un turno ganador del juego con su ID de jugador
   // Si existe, no podrá pujar nuevamente
@@ -137,20 +134,25 @@ const habilitadoParaPujar = async (
 
     // Si existe el juego, podemos continuar
     if (juego) {
-      // Obtenemos el turno
-      const turnos = await prisma.turnos.findUnique({
+      // Buscamos en todos los turnos si existe un turno ganador del juego con su ID de jugador
+      const turnos = await prisma.turnos.findMany({
         where: {
-          id: id_turno,
           id_juego: juego.id,
           id_ganador_jugador_juego: id_jugador_juego,
         },
       });
 
-      if (turnos) {
+      if (turnos.length > 0) {
         // Si existe un turno ganador del juego con su ID de jugador, no podrá pujar nuevamente
+        console.log(
+          `El jugador id:${jugador_juego.id_jugador} ya ha ganado un  previamente`
+        );
         return false;
       } else {
         // Si no existe, podrá pujar nuevamente
+        console.log(
+          `El jugador id:${jugador_juego.id_jugador} puede pujar nuevamente debido a que no existe un turno ganador del juego con su ID de jugador`
+        );
         return true;
       }
       // Está habilitado para pujar si existe un turno ganador del juego con su ID de jugador
@@ -175,92 +177,93 @@ export const registrarOferta = async (
   monto: number
 ) => {
   // Verificamos si el jugador está habilitado para pujar, es decir, si no ha ganado el turno previamente
-  const jugadorHbilitado = await habilitadoParaPujar(
-    id_jugador_juego,
-    id_turno
-  );
 
-  // Si está habilitado para pujar
-  if (jugadorHbilitado) {
-    // Obtenemos el jugador_juego
-    const jugador_juego = await buscarJugadorJuegoPorId(id_jugador_juego);
+  const turno = await obtenerTurnoPorId(id_turno);
+  if (turno) {
+    // Calculamos si es tiempo de ofertas
+    const esTiempoDeOfertas = tiempoDeOfertas(
+      turno.fecha_inicio_puja,
+      turno.tiempo_puja_seg
+    );
 
-    // Si el id_jugador_juego existe (Si el jugador ya es parte del juego)
-    if (jugador_juego) {
-      // Obtenemos los ID's del jugador y del juego
-      const id_jugador = jugador_juego.id_jugador;
-      const id_juego = jugador_juego.id_juego;
+    // Validamos si es tiempo de ofertas
+    if (esTiempoDeOfertas) {
+      const jugadorHbilitado = await habilitadoParaPujar(id_jugador_juego);
 
-      // Obtenemos el juego
-      const juego = await obtenerJuego(id_juego);
+      // Si está habilitado para pujar
+      if (jugadorHbilitado) {
+        // Obtenemos el jugador_juego
+        const jugador_juego = await buscarJugadorJuegoPorId(id_jugador_juego);
 
-      // Obtenemos el turno
-      const turno = await obtenerTurnoPorId(id_turno);
+        console.log({ jugador_juego });
 
-      // Si existe el juego, el turno, podemos registrar ofertas
-      if (juego && turno) {
-        // Calculamos si es tiempo de ofertas
-        const esTiempoDeOfertas = tiempoDeOfertas(
-          turno.fecha_inicio_puja,
-          turno.tiempo_puja_seg
-        );
+        // Si el id_jugador_juego existe (Si el jugador ya es parte del juego)
+        if (jugador_juego) {
+          // Obtenemos los ID's del jugador y del juego
+          const id_jugador = jugador_juego.id_jugador;
+          const id_juego = jugador_juego.id_juego;
 
-        // Validamos si es tiempo de ofertas
-        if (esTiempoDeOfertas) {
-          console.log({ esTiempoDeOfertas });
-          console.log({ jugador_juego });
+          // Obtenemos el juego
+          const juego = await obtenerJuego(id_juego);
 
-          // Validamos si el monto de la oferta es mayor o igual al monto mínimo de la puja
-          if (monto >= turno.monto_minimo_puja) {
-            const jugador_grupo_turno = await actuacrearJugador_Grupo_Turno(
-              id_turno,
-              jugador_juego.id,
-              monto
-            );
-            console.log({ jugador_grupo_turno });
-            return jugador_grupo_turno;
+          // Obtenemos el turno
+
+          // Si existe el juego, podemos registrar ofertas
+          if (juego) {
+            // Validamos si el monto de la oferta es mayor o igual al monto mínimo de la puja
+            if (monto >= turno.monto_minimo_puja) {
+              const jugador_grupo_turno = await actuacrearJugador_Grupo_Turno(
+                id_turno,
+                jugador_juego.id,
+                monto
+              );
+              console.log({ jugador_grupo_turno });
+              return jugador_grupo_turno;
+            } else {
+              throw new HttpException(
+                HttpStatusCodes400.BAD_REQUEST,
+                `El monto mínimo de la puja debe ser mayor a ${turno.monto_minimo_puja} ${juego.moneda}. del saldo del turno`
+              );
+            }
           } else {
-            throw new HttpException(
-              HttpStatusCodes400.BAD_REQUEST,
-              `El monto mínimo de la puja debe ser mayor a ${turno.monto_minimo_puja} ${juego.moneda}. del saldo del turno`
-            );
+            if (!juego) {
+              throw new HttpException(
+                HttpStatusCodes400.BAD_REQUEST,
+                "No existe el juego indicado"
+              );
+            } else {
+              throw new HttpException(
+                HttpStatusCodes400.BAD_REQUEST,
+                "No existe el juego con el ID especificado"
+              );
+            }
           }
         } else {
           throw new HttpException(
             HttpStatusCodes400.BAD_REQUEST,
-            "No es tiempo de ofertas."
+            "No existe jugador_juego con el ID especificado"
           );
         }
       } else {
-        if (!juego) {
-          throw new HttpException(
-            HttpStatusCodes400.BAD_REQUEST,
-            "No existe el juego indicado"
-          );
-        }
-        if (!turno) {
-          throw new HttpException(
-            HttpStatusCodes400.BAD_REQUEST,
-            "No existe el turno indicado"
-          );
-        } else {
-          throw new HttpException(
-            HttpStatusCodes400.BAD_REQUEST,
-            "No existe el juego con el ID especificado"
-          );
-        }
+        throw new HttpException(
+          HttpStatusCodes400.BAD_REQUEST,
+          "El jugador ya ha ganado el turno previamente"
+        );
       }
     } else {
       throw new HttpException(
         HttpStatusCodes400.BAD_REQUEST,
-        "No existe jugador_juego con el ID especificado"
+        "No es tiempo de ofertas."
       );
     }
+    console.log({ esTiempoDeOfertas });
   } else {
-    throw new HttpException(
-      HttpStatusCodes400.BAD_REQUEST,
-      "El jugador ya ha ganado el turno previamente"
-    );
+    if (!turno) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No existe el turno indicado"
+      );
+    }
   }
 };
 

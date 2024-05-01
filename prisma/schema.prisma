@@ -156,8 +156,6 @@ model Pujas {
   id_jugador_juego Int
   id_turno         Int
 
-  // id_turno_ganador Turnos[]
-
   @@id(name: "id", [id_jugador_juego, id_turno])
   @@map("Jugador_Grupo_Turno")
 }

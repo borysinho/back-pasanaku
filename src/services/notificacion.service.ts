@@ -685,14 +685,19 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
 
     // Recorremos todos los participantes del juego para notificarlos
     participantes.forEach(async (participante) => {
-      const jugador = await prisma.jugadores.findUniqueOrThrow({
+      const jugador = await prisma.jugadores.findUnique({
         where: {
           id: participante.id_jugador,
         },
       });
 
       // Si tienen un token para notificaciones las enviamos
-      if (jugador.client_token && jugador_ganador !== null) {
+
+      if (
+        jugador !== null &&
+        jugador.client_token &&
+        jugador_ganador !== null
+      ) {
         const message = defaultFinOfertas(
           jugador.client_token,
           id_juego,
