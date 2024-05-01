@@ -170,12 +170,20 @@ export const notificarPorCorreo = async (
 const enviarMensajeWhatsapp = async (para: string) => {
   try {
     const qr = process.env.LINK_QR || "";
-    console.log(`whatsapp:${para}`);
-    console.log(process.env.TWILIO_FROM_NUMBER);
+    const de = process.env.TWILIO_FROM_NUMBER || "";
+    // console.log(`whatsapp:${para}`);
+    // console.log(process.env.TWILIO_FROM_NUMBER);
+
+    console.log({
+      // mediaUrl: [qr],
+      from: `whatsapp:${de}`,
+      to: `whatsapp:${para}`,
+      body: templateWhatsApp,
+    });
 
     const { to, status } = await client.messages.create({
       mediaUrl: [qr],
-      from: process.env.TWILIO_FROM_NUMBER,
+      from: `whatsapp:${de}`,
       to: `whatsapp:${para}`,
       body: templateWhatsApp,
     });
@@ -634,14 +642,20 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
         .filter((id) => id !== null) as number[];
 
       // Seleccionamos el id de todos los jugadores que componen el juego
-      const todosLosJugadoresDelJuego: number[] = jugador_juego.map((j) => j.id);
-
-      // Seleccionamos todos los jugadores que no han ganado un turno
-      const jugadoresQueNoHanGanadoTurno = [...todosLosJugadoresDelJuego].filter(
-        (element) => !turnosConGanadores.includes(element)
+      const todosLosJugadoresDelJuego: number[] = jugador_juego.map(
+        (j) => j.id
       );
 
-      console.log({ turnosConGanadores, participantesJuego: todosLosJugadoresDelJuego, resta: jugadoresQueNoHanGanadoTurno });
+      // Seleccionamos todos los jugadores que no han ganado un turno
+      const jugadoresQueNoHanGanadoTurno = [
+        ...todosLosJugadoresDelJuego,
+      ].filter((element) => !turnosConGanadores.includes(element));
+
+      console.log({
+        turnosConGanadores,
+        participantesJuego: todosLosJugadoresDelJuego,
+        resta: jugadoresQueNoHanGanadoTurno,
+      });
 
       // Función para obtener un número aleatorio
       const getRandomInt = (max: number) => {
@@ -649,7 +663,10 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       };
 
       // Obtenemos un ganador aleatorio
-      const ganadorRandomico = jugadoresQueNoHanGanadoTurno[getRandomInt(jugadoresQueNoHanGanadoTurno.length - 1)];
+      const ganadorRandomico =
+        jugadoresQueNoHanGanadoTurno[
+          getRandomInt(jugadoresQueNoHanGanadoTurno.length - 1)
+        ];
       console.log({ ganadorRandomico });
 
       jugador_juego_ganador = await prisma.jugadores_Juegos.findUniqueOrThrow({
