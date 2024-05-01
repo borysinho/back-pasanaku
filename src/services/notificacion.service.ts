@@ -170,12 +170,17 @@ export const notificarPorCorreo = async (
 const enviarMensajeWhatsapp = async (para: string) => {
   try {
     const qr = process.env.LINK_QR || "";
+    console.log(`whatsapp:${para}`);
+    console.log(process.env.TWILIO_FROM_NUMBER);
+
     const { to, status } = await client.messages.create({
       mediaUrl: [qr],
-      from: `whatsapp:${de}`,
+      from: process.env.TWILIO_FROM_NUMBER,
       to: `whatsapp:${para}`,
       body: templateWhatsApp,
     });
+
+    console.log("twilio: ", to, status);
     return {
       error: false,
       to,
@@ -189,6 +194,7 @@ const enviarMensajeWhatsapp = async (para: string) => {
     //   throw new Error(error.message);
     // });
   } catch (error: any) {
+    console.log(error);
     return new HttpException(HttpStatusCodes500.SERVICE_UNAVAILABLE, error);
   }
 };
