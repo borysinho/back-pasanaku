@@ -364,23 +364,22 @@ export const iniciarTurno = async (id_juego: number, tiempoPujaSeg: number) => {
 
   //Validamos si existe
   if (juego) {
-    // Obtenemos todos los turnos del juego que puedan estar en TiempoOfertas o TiempoPagos
-    const turnosDeJuegoEnOfertasOPagos = await prisma.turnos.findMany({
+    // Obtenemos todos los turnos del juego que no hayan finalizado
+    const turnosQueNoHanFinalizado = await prisma.turnos.findMany({
       where: {
-        OR: [
-          { estado_turno: "TiempoOfertas" },
-          { estado_turno: "TiempoPagos" },
-        ],
+        NOT: {
+          estado_turno: "Finalizado",
+        },
       },
     });
 
     // Validamos si existe al menos un turno de un juego en estado TiempoOfertas o TiempoPagos
-    if (turnosDeJuegoEnOfertasOPagos.length > 0) {
+    if (turnosQueNoHanFinalizado.length > 0) {
       // Devolvemos un error indicando que no se puede iniciar un turno si no ha finalizado el anterior
       throw new HttpException(
         HttpStatusCodes400.BAD_REQUEST,
         `Existe al menos un turno del juego que no ha finalizado.
-Detalles: ${turnosDeJuegoEnOfertasOPagos.toString()}`
+Detalles: ${turnosQueNoHanFinalizado.toString()}`
       );
       // No existen turnos sin finalizar, podemos continuar.
     } else {
@@ -396,7 +395,7 @@ Detalles: ${turnosDeJuegoEnOfertasOPagos.toString()}`
         );
         // Hay turnos disponibles, se puede crear uno adicional
       } else {
-        // Validamos si no existe ningún turno previamente creado para el juego especificado
+        // Si no hay turnos creados, actualizamos el estado del juego a "Iniciado"
         if (turnosDeJuego.length === 0) {
           // Actualizamos el estado a "Iniciado"
           await actualizarJuego(id_juego, { estado_juego: "Iniciado" });
@@ -411,7 +410,10 @@ Detalles: ${turnosDeJuegoEnOfertasOPagos.toString()}`
         );
 
         // Notificamos a los clientes el inicio de las ofertas
-        await notificarInicioOfertas(id_juego, turno.id);
+        // await notificarInicioOfertas(id_juego, turno.id);
+        
+        // No ejecutamos await para no detener la ejecución del código y que se ejecute en segundo plano
+        notificarInicioOfertas(id_juego, turno.id);
 
         // Programamos el cierre de las ofertas
         programarGanadorDeJuego(
