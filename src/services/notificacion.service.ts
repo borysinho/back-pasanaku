@@ -581,18 +581,22 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
   // Obtenemos el turno que se está jugando en el momento
 
   console.log(`Proceso: Notificar ganador de juego ${id_juego}`);
-  const turnoEscuchandoOfertas = await prisma.turnos.findMany({
+
+  // Obtenemos los turnos de un juego que están en tiempo de ofertas
+  const turnoEnTiempoDeOfertas = await prisma.turnos.findMany({
     where: {
       id_juego,
       estado_turno: "TiempoOfertas",
     },
   });
 
+  // Obtenemos el juego
   const juego = await obtenerJuego(id_juego);
 
-  if (turnoEscuchandoOfertas.length === 1 && juego !== null) {
-    // Hay un turno que está en juego con estado "Actual"
-    const id_turno = turnoEscuchandoOfertas[0].id;
+  // Si solo existe un turno en tiempo de ofertas y el juego existe
+  if (turnoEnTiempoDeOfertas.length === 1 && juego !== null) {
+    // Solo hay un turno en tiempo de ofertas y está guardado en la variable turnoEnTiempoDeOfertas
+    const id_turno = turnoEnTiempoDeOfertas[0].id;
 
     // Obtenemos la primera de todas las pujas ordenado de mayor a menor
     const jugador_grupo_turno = await prisma.pujas.findFirst({
@@ -616,7 +620,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     if (jugador_grupo_turno === null) {
       // No hubo ganador, seleccionamos un ganador entre los jugadores que no han han ganado un turno
 
-      // Seleccionamos los ganadores de los turnos
+      // Seleccionamos los turnos que tienen ganadores
       const turnosConGanadores: number[] = (
         await prisma.turnos.findMany({
           where: {
@@ -629,13 +633,15 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
         .map((t) => t.id_ganador_jugador_juego)
         .filter((id) => id !== null) as number[];
 
-      const participantesJuego: number[] = jugador_juego.map((j) => j.id);
+      // Seleccionamos el id de todos los jugadores que componen el juego
+      const todosLosJugadoresDelJuego: number[] = jugador_juego.map((j) => j.id);
 
-      const resta = [...participantesJuego].filter(
+      // Seleccionamos todos los jugadores que no han ganado un turno
+      const jugadoresQueNoHanGanadoTurno = [...todosLosJugadoresDelJuego].filter(
         (element) => !turnosConGanadores.includes(element)
       );
 
-      console.log({ turnosConGanadores, participantesJuego, resta });
+      console.log({ turnosConGanadores, participantesJuego: todosLosJugadoresDelJuego, resta: jugadoresQueNoHanGanadoTurno });
 
       // Función para obtener un número aleatorio
       const getRandomInt = (max: number) => {
@@ -643,7 +649,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       };
 
       // Obtenemos un ganador aleatorio
-      const ganadorRandomico = resta[getRandomInt(resta.length - 1)];
+      const ganadorRandomico = jugadoresQueNoHanGanadoTurno[getRandomInt(jugadoresQueNoHanGanadoTurno.length - 1)];
       console.log({ ganadorRandomico });
 
       jugador_juego_ganador = await prisma.jugadores_Juegos.findUniqueOrThrow({
@@ -682,7 +688,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
         id: id_turno,
       },
       data: {
-        estado_turno: "Pasado",
+        estado_turno: "TiempoOfertasFinalizado",
       },
     });
 
@@ -698,7 +704,6 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       });
 
       // Si tienen un token para notificaciones las enviamos
-
       if (
         jugador !== null &&
         jugador.client_token &&
@@ -724,7 +729,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
     return jugador_grupo_turno;
   } else {
     // turno.length === 1 && juego !== null
-    if (turnoEscuchandoOfertas.length !== 1) {
+    if (turnoEnTiempoDeOfertas.length !== 1) {
       throw new HttpException(
         HttpStatusCodes400.BAD_REQUEST,
         "El juego especificado no está en tiempo de Ofertas"

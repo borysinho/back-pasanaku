@@ -74,9 +74,13 @@ model Invitados_Juegos {
 }
 
 enum EstadoTurnos {
-  Pasado
+  Iniciado
   TiempoOfertas
-  TiempoPagos
+  TiempoOfertasFinalizado
+  TiempoPagosTurnos
+  TiempoPagosTurnosFinalizado
+  TiempoPagosMultas
+  Finalizado
 }
 
 model Turnos {
@@ -88,7 +92,7 @@ model Turnos {
   id_juego                 Int
   id_ganador_jugador_juego Int?
 
-  estado_turno      EstadoTurnos @default(TiempoOfertas)
+  estado_turno      EstadoTurnos @default(Iniciado)
   fecha_turno       DateTime?    @default(now())
   fecha_inicio_puja DateTime     @default(now())
   tiempo_puja_seg   Int          @default(240)
@@ -101,6 +105,7 @@ model Turnos {
   monto_minimo_puja Int          @default(0)
 
   jugador_grupo_turno Pujas[]
+  pagos_turnos        PagosTurnos[]
 }
 
 model Jugadores {
@@ -144,6 +149,7 @@ model Jugadores_Juegos {
 
   jugador_grupo_turno Pujas[]
   Turnos              Turnos[]
+  Pagos               Pagos[]
 }
 
 model Pujas {
@@ -158,4 +164,32 @@ model Pujas {
 
   @@id(name: "id", [id_jugador_juego, id_turno])
   @@map("Jugador_Grupo_Turno")
+}
+
+enum TipoPago {
+  Turno
+  Multa
+}
+
+model Pagos {
+  id               Int              @id @default(autoincrement())
+  jugadores_juegos Jugadores_Juegos @relation(fields: [id_jugador_juego], references: [id], onDelete: NoAction)
+  tipo_pago        TipoPago         @default(Turno)
+  monto            Int
+  detalle          String
+  fecha            DateTime         @default(now()) @db.Date
+
+  id_jugador_juego Int
+
+  pagos_turnos PagosTurnos[]
+}
+
+model PagosTurnos {
+  id_pago  Int
+  id_turno Int
+
+  pago  Pagos  @relation(fields: [id_pago], references: [id], onDelete: NoAction)
+  turno Turnos @relation(fields: [id_turno], references: [id], onDelete: NoAction)
+
+  @@id(name: "id", [id_pago, id_turno])
 }

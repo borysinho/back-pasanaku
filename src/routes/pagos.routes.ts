@@ -10,7 +10,7 @@ class PagosRoutes {
 
   initializeRoutes() {
     this.router.get(
-      "/jugadores/juegos/turnos/:id_turno/jugadores_juegos/:id_jugador_juego/pagos",
+      "/jugadores_juegos/turnos/:id_turno/pagos",
       pagoController.obtenerPagosDeUnTurno
     );
   }

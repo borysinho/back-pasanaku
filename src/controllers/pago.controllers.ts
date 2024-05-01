@@ -5,12 +5,9 @@ import { HttpStatusCodes200, response } from "../utils";
 
 const obtenerPagosDeUnTurno = async (req: Request, res: Response) => {
   // try {
-  const { id_turno, id_jugador_juego } = req.params;
+  const { id_turno } = req.params;
 
-  const pagos = await obtenerPagosTurnos(
-    parseInt(id_turno),
-    parseInt(id_jugador_juego)
-  );
+  const pagos = await obtenerPagosTurnos(parseInt(id_turno));
 
   response(res, HttpStatusCodes200.ACCEPTED, pagos);
 };
