@@ -103,7 +103,7 @@ export const obtenerJugadores = async () => {
 };
 
 export const actualizarJugador = async (
-  { nombre, contrasena }: Prisma.JugadoresUpdateInput,
+  { nombre, contrasena, qr }: Prisma.JugadoresUpdateInput,
   { correo, telf }: Prisma.InvitadosUpdateInput,
   id: number
 ) => {
@@ -117,6 +117,7 @@ export const actualizarJugador = async (
       data: {
         nombre,
         contrasena,
+        qr,
         invitado: {
           update: {
             correo,

@@ -729,6 +729,11 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
         jugador.client_token &&
         jugador_ganador !== null
       ) {
+        if (jugador.id === jugador_juego_ganador.id_jugador) {
+          // const message = defaultGanadorDeTurno;
+        } else {
+        }
+
         const message = defaultFinOfertas(
           jugador.client_token,
           id_juego,
