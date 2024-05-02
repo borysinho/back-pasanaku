@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { HttpException } from "../exceptions";
 import { HttpStatusCodes500 } from "./http.status.code.utils";
 import {
+  notificarFinDePagosDeTurnos,
   notificarGanadorDeTurno,
   notificarInicioDePagosDeTurnos,
 } from "../services";
@@ -73,7 +74,7 @@ export const programarNotificarInicioDePagos = (
 
 // Este proceso se encarga de dar inicio a los pagos de un turno. Durante este tiempo los jugadores podrán realizar sus pagos
 // Se necesita el id del turno y la fecha y hora en la que se desea que inicie el proceso.
-export const programarDeterminarSiLosPagosDeTurnosFueronRealizados = (
+export const programarFinDeTiempoDePagos = (
   fechaHora: Date,
   id_turno: number
 ) => {
@@ -83,13 +84,13 @@ export const programarDeterminarSiLosPagosDeTurnosFueronRealizados = (
   // Programamos el evento
   try {
     console.log(
-      `Programando inicio de Pagos para el turno ${id_turno} en fecha ${fechaHora.toLocaleDateString()}`
+      `Programando fin de Pagos para el turno ${id_turno} en fecha ${fechaHora.toLocaleDateString()}`
     );
     cron.schedule(expr, async function () {
-      console.log(`Tiempo de Pagos Iniciado para el turno ${id_turno}.`);
+      console.log(`Tiempo de Pagos Finalizado para el turno ${id_turno}.`);
       // TODO - Implementar la lógica para notificar a los jugadores que no realizaron el pago
-      // await notificarGanadorDeTurno(id_juego);
-      console.log("Proceso para Inicio de Pagos finalizado.");
+      await notificarFinDePagosDeTurnos(id_turno);
+      console.log("Procesode Fin de Pagos terminado.");
     });
     return { error: false, data: "Notificaciones programadas correctamente" };
   } catch (error: any) {

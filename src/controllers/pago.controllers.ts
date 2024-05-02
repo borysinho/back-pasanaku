@@ -4,6 +4,7 @@ import {
   crearPagos_Turnos,
   obtenerPagosDeJugador_JuegoEnTurno,
   obtenerPagosTurnos,
+  obtenerSolicitudesDePagoDeJugador_Juego,
 } from "../services";
 import { HttpStatusCodes200, response } from "../utils";
 
@@ -31,7 +32,7 @@ const obtenerPagosDeJugador_JuegoEnUnTurnoEspecifico = async (
 };
 
 const crearPagoDeUnTurno = async (req: Request, res: Response) => {
-  const { id_jugador_juego, id_turno  } = req.params;
+  const { id_jugador_juego, id_turno } = req.params;
   const { monto_pagado, detalle } = req.body;
 
   const pago = await crearPagos_Turnos(
@@ -44,10 +45,26 @@ const crearPagoDeUnTurno = async (req: Request, res: Response) => {
   response(res, HttpStatusCodes200.CREATED, pago);
 };
 
+const obtenerSolicitudesDePagoDesdeUnJugador_Juego = async (
+  req: Request,
+  res: Response
+) => {
+  const { id_jugador_juego } = req.params;
+
+  const pagos = await obtenerSolicitudesDePagoDeJugador_Juego(
+    parseInt(id_jugador_juego)
+  );
+
+  response(res, HttpStatusCodes200.ACCEPTED, pagos);
+};
+
 export default {
   obtenerPagosDeUnTurno: catchedAsync(obtenerPagosDeUnTurno),
   obtenerPagosDeJugador_JuegoEnUnTurnoEspecifico: catchedAsync(
     obtenerPagosDeJugador_JuegoEnUnTurnoEspecifico
   ),
   crearPagoDeUnTurno: catchedAsync(crearPagoDeUnTurno),
+  obtenerSolicitudesDePagoDesdeUnJugador_Juego: catchedAsync(
+    obtenerSolicitudesDePagoDesdeUnJugador_Juego
+  ),
 };

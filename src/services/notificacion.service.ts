@@ -33,9 +33,11 @@ import {
   defaultGanadorDeTurno,
   defaultInicioDePagos,
   programarNotificarInicioDePagos,
-  programarDeterminarGanadorDeJuego,
-  programarDeterminarSiLosPagosDeTurnosFueronRealizados,
+  // programarDeterminarGanadorDeJuego,
+  // programarDeterminarSiLosPagosDeTurnosFueronRealizados,
   defaultInicioDePagosAlGanador,
+  programarFinDeTiempoDePagos,
+  defaultFinDeTiempoDePagos,
 } from "../utils";
 import Mail from "nodemailer/lib/mailer";
 
@@ -771,7 +773,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
 
             await registrarSolicitudDePago(
               jugadorJuegoEnBucle.id,
-              turnoEnTiempoDeOfertas[0].id,
+              turno_actualizado.id,
               monto_a_pagar,
               juego.moneda,
               juego.nombre,
@@ -867,7 +869,7 @@ const registrarSolicitudDePago = async (
         detalle: `Cobro de ${monto_a_pagar} ${moneda}. del juego ${nombre_juego} para ${nombre_jugador}`,
       },
     });
-    console.log({ pago });
+    console.log({ SolicitudDePago: pago });
   }
 
   /**
@@ -986,13 +988,8 @@ export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
             jugador.client_token
           );
         } else {
+          // No hacer nada
         }
-        // if (!jugador) {
-        //   throw new HttpException(
-        //     HttpStatusCodes400.BAD_REQUEST,
-        //     `No se encontró un jugador con el ID ${jugador_juego.id_jugador}`
-        //   );
-        // }
       }
       if (Object.keys(message).length !== 0) {
         require("util").inspect.defaultOptions.depth = null;
@@ -1000,6 +997,12 @@ export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
         sendFcmMessage(message);
       }
     });
+
+    // Programamos el fin del tiempo de pagos
+    programarFinDeTiempoDePagos(
+      sumarSegundosAFecha(turno.fecha_inicio_pago, turno.tiempo_pago_seg),
+      turno.id
+    );
 
     return { turno };
   } else {
@@ -1012,9 +1015,73 @@ export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
 
 export const notificarFinDePagosDeTurnos = async (id_turno: number) => {
   /**
-   * 1. Obtenemos una lista de todos los Pagos_Turnos relacionados con el turno
-   * 2. Con este listado, validamos si todos han realizado el pago, excepto el ganador del turno
-   * 3. Si todos han realizado el pago, actualizamos el estado del turno a "Finalizado"
-   * 4. Si no todos han realizado el pago, determinamos quienes no han realizado el pago y creamos un Pago de tipo Multa con
+   * 1. Actualizamos el estado del turno a "TiempoPagosTurnosFinalizado"
+   * 2. Obtenemos el juego para notificar con el nombre del juego
+   * 3. Obtenemos un listado de todos los jugadores que participan en el juego (jugadores_juegos)
+   * 4. Recorremos cada uno de los jugadores_juegos y notificamos (en caso que tengan un token de Firebase) a cada uno de ellos que el proceso de pagos ha finalizado
    */
+
+  // Obtenemos el turno
+  const turno = await prisma.turnos.update({
+    where: {
+      id: id_turno,
+    },
+    data: {
+      estado_turno: "Finalizado",
+    },
+  });
+
+  // Obtenemos el juego
+  if (turno) {
+    // Obtenemos el juego
+    const juego = await obtenerJuego(turno.id_juego);
+    if (!juego) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No se encontró un juego con el ID indicado"
+      );
+    }
+    // Obtenemos los jugadores que participan en el juego
+    const jugadores_juegos = await obtenerJugadores_JuegosDeUnJuego(juego.id);
+    if (jugadores_juegos.length === 0) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No se encontraron jugadores que participen en el juego"
+      );
+    }
+    // Recorremos cada uno de los jugadores_juegos y notificamos a cada uno de ellos que el proceso de pagos ha finalizado
+    let message: Object = {};
+    jugadores_juegos.forEach(async (jugador_juego) => {
+      const jugador = await obtenerJugador(jugador_juego.id_jugador);
+      if (jugador && jugador.client_token !== "") {
+        message = defaultFinDeTiempoDePagos(
+          jugador_juego.id,
+          jugador.id,
+          juego.nombre,
+          jugador.client_token
+        );
+      }
+      if (Object.keys(message).length !== 0) {
+        require("util").inspect.defaultOptions.depth = null;
+        // console.log({ message });
+        sendFcmMessage(message);
+      }
+    });
+
+    const turno_actualizado = await prisma.turnos.update({
+      where: {
+        id: id_turno,
+      },
+      data: {
+        estado_turno: "Finalizado",
+      },
+    });
+
+    return { turno };
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No se encontró un turno con el ID indicado"
+    );
+  }
 };

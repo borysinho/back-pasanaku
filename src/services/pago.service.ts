@@ -103,3 +103,19 @@ export const crearPagos_Turnos = async (
 
   return pago_turno;
 };
+
+export const obtenerSolicitudesDePagoDeJugador_Juego = async (
+  id_jugador_juego: number
+) => {
+  const pagos = await prisma.pagos.findMany({
+    where: {
+      id_jugador_juego,
+      tipo_pago: "Turno",
+      pagos_turnos: {
+        none: {},
+      },
+    },
+  });
+
+  return pagos;
+};

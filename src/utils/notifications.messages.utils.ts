@@ -176,10 +176,6 @@ export const defaultInicioDePagosAlGanador = (
   id_jugador_notif: number,
   nombre_juego: string,
   token: string
-  // qr: string,
-  // monto_a_pagar: number,
-  // moneda: Moneda,
-  // token: string
 ) => {
   const message: TFBMessage = {
     token,
@@ -190,6 +186,31 @@ Se te notificará conforme vayas recibiendo los pagos.`,
     },
     data: {
       event: "inicio-pagos",
+      id_jugador_juego: id_jugador_juego.toString(),
+      id_jugador_notif: id_jugador_notif.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};
+
+export const defaultFinDeTiempoDePagos = (
+  id_jugador_juego: number,
+  id_jugador_notif: number,
+  nombre_juego: string,
+  token: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: `Fin de pagos para ${nombre_juego}`,
+      body: `El tiempo de pagos ha finalizado.`,
+    },
+    data: {
+      event: "fin-pagos",
       id_jugador_juego: id_jugador_juego.toString(),
       id_jugador_notif: id_jugador_notif.toString(),
     },
