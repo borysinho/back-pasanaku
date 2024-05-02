@@ -8,7 +8,7 @@ import { buscarInvitado } from "./invitado.service";
 
 // export const crearJugadorSinRelacionarAInvitado = async (
 export const crearJugadorSinSerInvitado = async (
-  { nombre, usuario, contrasena }: Prisma.JugadoresCreateInput,
+  { nombre, usuario, contrasena, qr }: Prisma.JugadoresCreateInput,
   { telf, correo }: Prisma.InvitadosCreateInput
 ) => {
   const jugador = await prisma.jugadores.create({
@@ -16,6 +16,7 @@ export const crearJugadorSinSerInvitado = async (
       nombre,
       usuario,
       contrasena,
+      qr,
       invitado: {
         create: {
           correo,
@@ -27,6 +28,7 @@ export const crearJugadorSinSerInvitado = async (
       id: true,
       nombre: true,
       usuario: true,
+      qr: true,
       invitado: true,
     },
   });
@@ -294,6 +296,17 @@ export const obtenerJugadoresDeJuego = async (id_juego: number) => {
 
   console.log({ jugadores });
   return jugadores;
+};
+
+export const obtenerJugadores_JuegosDeUnJuego = async (id_juego: number) => {
+  const jugadores_juegos = await prisma.jugadores_Juegos.findMany({
+    where: {
+      id_juego,
+    },
+  });
+
+  console.log({ jugadores_juegos });
+  return jugadores_juegos;
 };
 
 export const actualizarTokenFireBase = async (

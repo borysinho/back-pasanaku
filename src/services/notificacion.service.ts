@@ -24,6 +24,8 @@ import {
   formatearTiempo,
   defaultFinOfertas,
   defaultInvitacionAJuego,
+  defaultGanadorDeTurno,
+  defaultInicioDePagos,
 } from "../utils";
 import Mail from "nodemailer/lib/mailer";
 
@@ -33,6 +35,7 @@ import {
   obtenerJugador,
   obtenerJugadores,
   obtenerJugadoresDeJuego,
+  obtenerJugadores_JuegosDeUnJuego,
 } from "./jugador.service";
 import { obtenerTurnoPorId, obtenerTurnosDeJuego } from "./turno.service";
 import {
@@ -743,6 +746,34 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       }
     });
 
+    // Si el jugador ganador no tiene QR, notificamos al ganador que debe subir su QR
+    if (jugador_ganador !== null && jugador_ganador.qr === "") {
+      // Notificamos al ganador del turno indicando que tiene que subir su QR y cuando lo actualice, iniciamos el tiempo de pagos
+      const { id, client_token, nombre, qr } = jugador_ganador;
+      console.log(
+        `Notificando al jugador ganador (${nombre}) que debe subir su QR`
+      );
+      const message = defaultGanadorDeTurno(
+        id,
+        id,
+        qr !== "",
+        monto_pujado_para_ganar,
+        juego.moneda,
+        client_token
+      );
+      sendFcmMessage(message);
+    } else {
+      if (jugador_ganador !== null && jugador_ganador.qr !== "") {
+        // Programamos la notificación de inicio de pagos
+        // Programamos para determinar si los pagos se realizaron correctamente
+      } else {
+        throw new HttpException(
+          HttpStatusCodes400.BAD_REQUEST,
+          "No se pudo obtener el jugador ganador del turno"
+        );
+      }
+    }
+
     return jugador_grupo_turno;
   } else {
     // turno.length === 1 && juego !== null
@@ -760,4 +791,68 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
   }
 };
 
-export const notificarInvitacionAJuego = async () => {};
+export const notificarInicioDePagos = async (id_turno: number) => {
+  /**
+   * 1. Obtenemos el turno con el id_turno facilitado
+   * 2. Obtenemos el juego para notificar con el nombre del juego
+   * 2. Obtenemos un listado de todos los jugadores que participan en el juego (jugadores_juegos)
+   * 3. Recorremos cada uno de los jugadores_juegos y notificamos (en caso que tengan un token de Firebase) a cada uno de ellos que el proceso de pagos ha iniciado
+   */
+
+  // Obtenemos el turno
+  const turno = await obtenerTurnoPorId(id_turno);
+
+  // Obtenemos el juego
+  if (turno) {
+    // Obtenemos el juego
+    const juego = await obtenerJuego(turno.id_juego);
+    if (!juego) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No se encontró un juego con el ID indicado"
+      );
+    }
+    // Obtenemos los jugadores que participan en el juego
+    const jugadores_juegos = await obtenerJugadores_JuegosDeUnJuego(juego.id);
+    if (jugadores_juegos.length === 0) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "No se encontraron jugadores que participen en el juego"
+      );
+    }
+    // Recorremos cada uno de los jugadores_juegos y notificamos a cada uno de ellos que el proceso de pagos ha iniciado
+    jugadores_juegos.forEach(async (jugador_juego) => {
+      const jugador = await obtenerJugador(jugador_juego.id_jugador);
+      if (jugador && jugador.client_token !== "") {
+        const message = defaultInicioDePagos(
+          jugador.id,
+          jugador.id,
+          juego.nombre,
+          jugador.qr,
+          turno.monto_pago,
+          juego.moneda,
+          jugador.client_token
+        );
+        require("util").inspect.defaultOptions.depth = null;
+        console.log({ message });
+        sendFcmMessage(message);
+      } else {
+        if (!jugador) {
+          throw new HttpException(
+            HttpStatusCodes400.BAD_REQUEST,
+            `No se encontró un jugador con el ID ${jugador_juego.id_jugador}`
+          );
+        }
+      }
+    });
+
+    return { message: "Notificaciones de inicio de pagos enviadas" };
+  } else {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No se encontró un turno con el ID indicado"
+    );
+  }
+};
+
+// notificarInicioDePagos(1);

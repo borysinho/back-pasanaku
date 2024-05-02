@@ -109,3 +109,63 @@ export const defaultInvitacionAJuego = (
 
   return { message };
 };
+
+export const defaultGanadorDeTurno = (
+  id_jugador: number,
+  id_jugador_notif: number,
+  tiene_qr: boolean,
+  monto_puja: number,
+  moneda: Moneda,
+  token: string
+) => {
+  const event = tiene_qr ? "fin-ofertas" : "ganador-debe-subir-qr";
+  const body = tiene_qr
+    ? `¡Felicidades! Has ganado el turno con ${monto_puja} ${moneda}.`
+    : `¡Felicidades! Has ganado el turno con ${monto_puja} ${moneda}. Sube tu QR para que los demás jugadores puedan realizar su pago correspondiente.`;
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: "¡Eres el ganador!",
+      body,
+    },
+    data: {
+      event,
+      id_jugador: id_jugador.toString(),
+      id_jugador_notif: id_jugador_notif.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};
+
+export const defaultInicioDePagos = (
+  id_jugador: number,
+  id_jugador_notif: number,
+  nombre_juego: string,
+  qr: string,
+  monto_a_pagar: number,
+  moneda: Moneda,
+  token: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: `Inicio de pagos para ${nombre_juego}`,
+      body: `Realiza tu pago de ${monto_a_pagar} ${moneda}.`,
+      image: qr,
+    },
+    data: {
+      event: "inicio-pagos",
+      id_jugador: id_jugador.toString(),
+      id_jugador_notif: id_jugador_notif.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};

@@ -5,7 +5,7 @@ import { HttpException } from "../exceptions";
 import {
   HttpStatusCodes400,
   fechaHoraActual,
-  programarGanadorDeJuego,
+  programarDeterminarGanadorDeJuego,
   sumarSegundosAFecha,
   tiempoDeOfertas,
 } from "../utils";
@@ -411,12 +411,12 @@ Detalles: ${turnosQueNoHanFinalizado.toString()}`
 
         // Notificamos a los clientes el inicio de las ofertas
         // await notificarInicioOfertas(id_juego, turno.id);
-        
+
         // No ejecutamos await para no detener la ejecución del código y que se ejecute en segundo plano
         notificarInicioOfertas(id_juego, turno.id);
 
         // Programamos el cierre de las ofertas
-        programarGanadorDeJuego(
+        programarDeterminarGanadorDeJuego(
           sumarSegundosAFecha(turno.fecha_inicio_puja, turno.tiempo_puja_seg),
           id_juego
         );

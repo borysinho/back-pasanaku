@@ -103,6 +103,7 @@ model Turnos {
   saldo_restante    Int          @default(0)
   // Es el 8% del saldo restante
   monto_minimo_puja Int          @default(0)
+  monto_pago        Int          @default(0)
 
   jugador_grupo_turno Pujas[]
   pagos_turnos        PagosTurnos[]
