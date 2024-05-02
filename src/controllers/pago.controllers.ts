@@ -33,10 +33,11 @@ const obtenerPagosDeJugador_JuegoEnUnTurnoEspecifico = async (
 
 const crearPagoDeUnTurno = async (req: Request, res: Response) => {
   const { id_jugador_juego, id_turno } = req.params;
-  const { monto_pagado, detalle } = req.body;
+  const { monto_pagado, detalle, id_jugador_remitente } = req.body;
 
   const pago = await crearPagos_Turnos(
     parseInt(id_jugador_juego),
+    parseInt(id_jugador_remitente),
     parseInt(id_turno),
     monto_pagado,
     detalle

@@ -221,3 +221,22 @@ export const defaultFinDeTiempoDePagos = (
 
   return { message };
 };
+
+export const defaultNotificarPagoAGanador = (id_jugador_juego: number, token: string, nombre_remitente: string, monto: number, detalle: string) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: `Pago recibido de ${nombre_remitente}`,
+      body: `Has recibido un pago de ${monto} por ${detalle}`,
+    },
+    data: {
+      event: "pago-recibido",
+      id_jugador_juego: id_jugador_juego.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+}

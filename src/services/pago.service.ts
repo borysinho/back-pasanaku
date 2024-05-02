@@ -1,8 +1,9 @@
 import { connect } from "http2";
 import prisma from "./prisma.service";
 import { HttpException } from "../exceptions";
-import { HttpStatusCodes400 } from "../utils";
+import { HttpStatusCodes400, defaultNotificarPagoAGanador } from "../utils";
 import { obtenerTurnoPorId } from "./turno.service";
+import { sendFcmMessage } from "./notificacion.service";
 export const obtenerPagosTurnos = async (id_turno: number) => {
   const pagos_turnos = await prisma.pagos.findMany({
     where: {
@@ -40,7 +41,8 @@ export const obtenerPagosDeJugador_JuegoEnTurno = async (
 };
 
 export const crearPagos_Turnos = async (
-  id_jugador_juego: number,
+  id_jugador_juego_destinatario: number,
+  id_jugador_remitente: number,
   id_turno: number,
   monto_pagado: number,
   detalle: string = ""
@@ -61,19 +63,39 @@ export const crearPagos_Turnos = async (
     );
   }
 
-  const jugador_juego = await prisma.jugadores_Juegos.findUnique({
+  const jugador_juego_destinatario = await prisma.jugadores_Juegos.findUnique({
     where: {
-      id: id_jugador_juego,
+      id: id_jugador_juego_destinatario,
     },
   });
 
-  if (!jugador_juego) {
+  if (!jugador_juego_destinatario) {
     throw new Error("Jugador_Juego no encontrado");
+  }
+
+  const jugador_destinatario = await prisma.jugadores.findUnique({
+    where: {
+      id: jugador_juego_destinatario.id_jugador,
+    },
+  });
+
+  if (!jugador_destinatario) {
+    throw new Error("Jugador no encontrado");
+  }
+
+  const jugador_remitente = await prisma.jugadores.findUnique({
+    where: {
+      id: id_jugador_remitente,
+    },
+  });
+
+  if (!jugador_remitente) {
+    throw new Error("Jugador no encontrado");
   }
 
   const solicitudPago = await prisma.pagos.findFirst({
     where: {
-      id_jugador_juego,
+      id_jugador_juego: id_jugador_juego_destinatario,
       tipo_pago: "Turno",
       NOT: {
         pagos_turnos: {
@@ -100,6 +122,16 @@ export const crearPagos_Turnos = async (
       detalle,
     },
   });
+
+  const message = defaultNotificarPagoAGanador(
+    jugador_juego_destinatario.id,
+    jugador_destinatario.client_token,
+    jugador_remitente.nombre,
+    monto_pagado,
+    detalle
+  );
+
+  sendFcmMessage(message);
 
   return pago_turno;
 };
