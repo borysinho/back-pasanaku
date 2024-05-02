@@ -304,7 +304,9 @@ const crearTurnoPreviaValidacion = async (
   id_juego: number,
   monto_total: number,
   cant_jugadores: number,
-  tiempo_puja_seg: number
+  tiempo_puja_seg: number,
+  tiempo_inicio_pago_seg: number,
+  tiempo_pago_seg: number
 ) => {
   // Obtenemos el número de turno que toca
   const turnosSortByNumber = await prisma.turnos.findMany({
@@ -342,6 +344,11 @@ const crearTurnoPreviaValidacion = async (
     fecha_turno: ahora,
     fecha_inicio_puja: ahora,
     tiempo_puja_seg,
+    fecha_inicio_pago: sumarSegundosAFecha(
+      fechaHoraActual(),
+      tiempo_inicio_pago_seg
+    ),
+    tiempo_pago_seg,
     saldo_restante,
     monto_minimo_puja,
   };
@@ -351,7 +358,12 @@ const crearTurnoPreviaValidacion = async (
   return turno;
 };
 
-export const iniciarTurno = async (id_juego: number, tiempoPujaSeg: number) => {
+export const iniciarTurno = async (
+  id_juego: number,
+  tiempo_puja_seg: number,
+  tiempo_inicio_pago_seg: number,
+  tiempo_pago_seg: number
+) => {
   /**
    * Validaciones para iniciar turno
    *    - El juego debe existir
@@ -406,7 +418,9 @@ Detalles: ${turnosQueNoHanFinalizado.toString()}`
           id_juego,
           juego.monto_total,
           juego.cant_jugadores,
-          tiempoPujaSeg
+          tiempo_puja_seg,
+          tiempo_inicio_pago_seg,
+          tiempo_pago_seg
         );
 
         // Notificamos a los clientes el inicio de las ofertas

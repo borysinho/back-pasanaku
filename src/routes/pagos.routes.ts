@@ -13,6 +13,14 @@ class PagosRoutes {
       "/jugadores_juegos/turnos/:id_turno/pagos",
       pagoController.obtenerPagosDeUnTurno
     );
+    this.router.get(
+      "/jugadores_juegos/:id_jugador_juego/turnos/:id_turno/pagos",
+      pagoController.obtenerPagosDeJugador_JuegoEnUnTurnoEspecifico
+    );
+    this.router.post(
+      "/jugadores_juegos/:id_jugador_juego/turnos/:id_turno/pagos",
+      pagoController.crearPagoDeUnTurno
+    );
   }
 }
 

@@ -192,5 +192,9 @@ model PagosTurnos {
   pago  Pagos  @relation(fields: [id_pago], references: [id], onDelete: NoAction)
   turno Turnos @relation(fields: [id_turno], references: [id], onDelete: NoAction)
 
+  monto_pagado Int
+  detalle      String?  @default("")
+  fecha        DateTime @default(now()) @db.Date
+
   @@id(name: "id", [id_pago, id_turno])
 }

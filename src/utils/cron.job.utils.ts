@@ -1,7 +1,10 @@
 import cron from "node-cron";
 import { HttpException } from "../exceptions";
 import { HttpStatusCodes500 } from "./http.status.code.utils";
-import { notificarGanadorDeTurno } from "../services";
+import {
+  notificarGanadorDeTurno,
+  notificarInicioDePagosDeTurnos,
+} from "../services";
 
 const cronExpresion = (fechaHora: Date) => {
   return `${fechaHora.getSeconds()} ${fechaHora.getMinutes()} ${fechaHora.getHours()} ${fechaHora.getDate()} ${
@@ -38,7 +41,10 @@ export const programarDeterminarGanadorDeJuego = (
   }
 };
 
-export const notificarInicioDePagos = (fechaHora: Date, id_turno: number) => {
+export const programarNotificarInicioDePagos = (
+  fechaHora: Date,
+  id_turno: number
+) => {
   // Convertimos la fecha y hora a formato cron
   const expr = cronExpresion(fechaHora);
 
@@ -51,7 +57,7 @@ export const notificarInicioDePagos = (fechaHora: Date, id_turno: number) => {
       console.log(
         `Enviado notificaciones sobre el inicio de Pagos para el Turno id:${id_turno}.`
       );
-      // await notificarGanadorDeTurno(id_juego);
+      await notificarInicioDePagosDeTurnos(id_turno);
       console.log(
         "Proceso envío de notificaciones del inicio de Pagos Finalizado."
       );
@@ -67,7 +73,7 @@ export const notificarInicioDePagos = (fechaHora: Date, id_turno: number) => {
 
 // Este proceso se encarga de dar inicio a los pagos de un turno. Durante este tiempo los jugadores podrán realizar sus pagos
 // Se necesita el id del turno y la fecha y hora en la que se desea que inicie el proceso.
-export const programarDeterminarSiLosPagosFueronRealizados = (
+export const programarDeterminarSiLosPagosDeTurnosFueronRealizados = (
   fechaHora: Date,
   id_turno: number
 ) => {
@@ -81,6 +87,7 @@ export const programarDeterminarSiLosPagosFueronRealizados = (
     );
     cron.schedule(expr, async function () {
       console.log(`Tiempo de Pagos Iniciado para el turno ${id_turno}.`);
+      // TODO - Implementar la lógica para notificar a los jugadores que no realizaron el pago
       // await notificarGanadorDeTurno(id_juego);
       console.log("Proceso para Inicio de Pagos finalizado.");
     });

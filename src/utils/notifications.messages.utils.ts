@@ -121,7 +121,8 @@ export const defaultGanadorDeTurno = (
   const event = tiene_qr ? "fin-ofertas" : "ganador-debe-subir-qr";
   const body = tiene_qr
     ? `¡Felicidades! Has ganado el turno con ${monto_puja} ${moneda}.`
-    : `¡Felicidades! Has ganado el turno con ${monto_puja} ${moneda}. Sube tu QR para que los demás jugadores puedan realizar su pago correspondiente.`;
+    : `¡Felicidades! Has ganado el turno con ${monto_puja} ${moneda}. 
+Sube tu QR para que los demás jugadores puedan realizar su pago correspondiente.`;
   const message: TFBMessage = {
     token,
     notification: {
@@ -142,7 +143,7 @@ export const defaultGanadorDeTurno = (
 };
 
 export const defaultInicioDePagos = (
-  id_jugador: number,
+  id_jugador_juego: number,
   id_jugador_notif: number,
   nombre_juego: string,
   qr: string,
@@ -159,7 +160,7 @@ export const defaultInicioDePagos = (
     },
     data: {
       event: "inicio-pagos",
-      id_jugador: id_jugador.toString(),
+      id_jugador_juego: id_jugador_juego.toString(),
       id_jugador_notif: id_jugador_notif.toString(),
     },
     android: {
