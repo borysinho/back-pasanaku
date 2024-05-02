@@ -170,3 +170,33 @@ export const defaultInicioDePagos = (
 
   return { message };
 };
+
+export const defaultInicioDePagosAlGanador = (
+  id_jugador_juego: number,
+  id_jugador_notif: number,
+  nombre_juego: string,
+  token: string
+  // qr: string,
+  // monto_a_pagar: number,
+  // moneda: Moneda,
+  // token: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: `Inicio de pagos para ${nombre_juego}`,
+      body: `Se ha iniciado el tiempo de realizar los pagos del turno.
+Se te notificará conforme vayas recibiendo los pagos.`,
+    },
+    data: {
+      event: "inicio-pagos",
+      id_jugador_juego: id_jugador_juego.toString(),
+      id_jugador_notif: id_jugador_notif.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};

@@ -177,7 +177,7 @@ model Pagos {
   jugadores_juegos Jugadores_Juegos @relation(fields: [id_jugador_juego], references: [id], onDelete: NoAction)
   tipo_pago        TipoPago         @default(Turno)
   monto            Int
-  detalle          String
+  detalle          String?
   fecha            DateTime         @default(now()) @db.Date
 
   id_jugador_juego Int
