@@ -56,6 +56,7 @@ import {
   obtenerCreadorDeJuego,
   obtenerJuego,
 } from "./juego.service";
+import { Console } from "console";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -600,10 +601,47 @@ const participantesDeJuego = async (id_juego: number) => {
   return jugador_juego;
 };
 
+const registrarSolicitudDePago = async (
+  id_jugador_juego_iterando: number,
+  id_turno: number,
+  monto_a_pagar: number,
+  moneda: Moneda,
+  nombre_juego: string,
+  nombre_jugador: string
+) => {
+  //Si NO existe ya una orden de pago para ese jugador con ese turno, entonces registramos
+
+  const existe_pago = await prisma.pagos.findFirst({
+    where: {
+      id_jugador_juego: id_jugador_juego_iterando,
+      tipo_pago: "Turno",
+      pagos_turnos: {
+        some: {
+          id_turno,
+        },
+      },
+    },
+  });
+
+  console.log({ existe_pago });
+
+  // No existe la orden de pago, procedemos a registrar una
+  if (existe_pago === null) {
+    const pago = await prisma.pagos.create({
+      data: {
+        id_jugador_juego: id_jugador_juego_iterando,
+        monto: monto_a_pagar,
+        detalle: `Cobro de ${monto_a_pagar} ${moneda}. del juego ${nombre_juego} para ${nombre_jugador}`,
+      },
+    });
+    console.log({ SolicitudDePago: pago });
+  }
+};
+
 export const notificarGanadorDeTurno = async (id_juego: number) => {
   // Obtenemos el turno que se está jugando en el momento
 
-  console.log(`NOTIFICANDO GANADOR DE TURNO ${id_juego}`);
+  console.log(`NOTIFICANDOOOOOOOOOOOOOOOOOOO GANADOR DE TURNO ${id_juego}`);
 
   // Obtenemos los turnos de un juego que están en tiempo de ofertas
   const turnoEnTiempoDeOfertas = await prisma.turnos.findMany({
@@ -615,6 +653,8 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
 
   // Obtenemos el juego
   const juego = await obtenerJuego(id_juego);
+
+  console.log({ JUEGOOOOOO: juego });
 
   // Si solo existe un turno en tiempo de ofertas y el juego existe
   if (turnoEnTiempoDeOfertas.length === 1 && juego !== null) {
@@ -631,18 +671,24 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       },
     });
 
+    console.log({ JUGADOR_GRUPO_TURNO: jugador_grupo_turno });
+
     // Obtenemos los participantes
     const jugador_juego = await participantesDeJuego(id_juego);
+
+    console.log({ JUGADOR_JUEGOOOO: jugador_juego });
 
     let jugador_juego_ganador: Jugadores_Juegos;
 
     // variable que guarda el monto con el que ganó el turno
     let monto_pujado_para_ganar: number = 0;
 
+    console.log({ MONTOPUJADOPARAGANAR: monto_pujado_para_ganar });
+
     // Preguntamos si NO hubo pujas
     if (jugador_grupo_turno === null) {
       // No hubo ganador, seleccionamos un ganador entre los jugadores que no han han ganado un turno
-
+      console.log({ JUGADOR_GRUPO_TURNO: "jugador_grupo_turno === null)" });
       // Seleccionamos los turnos que tienen ganadores
       const turnosConGanadores: number[] = (
         await prisma.turnos.findMany({
@@ -655,6 +701,8 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       )
         .map((t) => t.id_ganador_jugador_juego)
         .filter((id) => id !== null) as number[];
+
+      console.log({ TURNOSCONGANADORES: turnosConGanadores });
 
       // Seleccionamos el id de todos los jugadores que componen el juego
       const todosLosJugadoresDelJuego: number[] = jugador_juego.map(
@@ -696,6 +744,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
           id: jugador_grupo_turno.id_jugador_juego,
         },
       });
+      console.log({ JUGADOR_JUEGO_GANADORSANGOOO: jugador_juego_ganador });
 
       // Guardamos el monto con el que ganó el turno
       monto_pujado_para_ganar = jugador_grupo_turno.monto_puja;
@@ -706,6 +755,8 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       jugador_juego_ganador.id_jugador
     );
 
+    console.log({ JUGADORRRRRRR_GANADORRRRRR: jugador_ganador });
+
     if (jugador_ganador !== null) {
       // console.log({ jugador_ganador });
 
@@ -714,6 +765,8 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
         id_turno,
         jugador_juego_ganador.id
       );
+
+      console.log({ TURNANGO_GANADORSANGO: turno_ganador });
 
       // Si hubo pujas, el monto  a pagar es el monto mensual - (el valor de la puja / (cantidad de participantes - 1))
       // Si no hubo pujas, el monto a pagar es el monto mensual
@@ -727,6 +780,8 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
           : monto_mensual -
             Math.round(monto_pujado_para_ganar / (juego.cant_jugadores - 1));
 
+      console.log({ MONTO_A_PAGAR: monto_a_pagar });
+
       // Actualizamos el estado del turno y el monto a pagar
       const turno_actualizado = await prisma.turnos.update({
         where: {
@@ -738,13 +793,16 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
         },
       });
 
+      console.log({ TURNO_ACTUALIZADO: turno_actualizado });
+
       // Obtenemos los participantes del juego
       const participantes = await participantesDeJuego(id_juego);
-      // console.log({ participantes });
+      console.log({ PARTICIPANTESSSSS: participantes });
 
       // Recorremos todos los participantes del juego para notificarlos
       for (const key in participantes) {
         const jugadorJuegoEnBucle = participantes[key];
+
         // console.log({ jugadorJuegoEnBucle });
 
         // Obtenemos el jugador del participante
@@ -753,24 +811,11 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
             id: jugadorJuegoEnBucle.id_jugador,
           },
         });
+        console.log({ JUGADORENBUCLEEE: jugadorEnBucle });
 
-        // Empezamos a notificar solo a los que tienen token
-        if (jugadorEnBucle !== null && jugadorEnBucle.client_token !== "") {
-          let message;
-
-          // Si el jugador seleccionado es el ganador del turno, armamos un mensaje personalizado para él en caso de que tenga o no tenga QR subido
-          if (jugadorEnBucle.id === jugador_juego_ganador.id_jugador) {
-            message = defaultGanadorDeTurno(
-              jugador_ganador.id,
-              jugadorJuegoEnBucle.id,
-              jugador_ganador.qr !== "",
-              monto_pujado_para_ganar,
-              juego.moneda,
-              jugadorEnBucle.client_token
-            );
-          } else {
-            // El jugador seleccionado no es el ganador del turno, calculam
-
+        if (jugadorEnBucle !== null) {
+          // Registramos la solicitud de pago solo si el jugador en bucle no es el ganador del turno
+          if (jugadorEnBucle.id !== jugador_juego_ganador.id_jugador) {
             await registrarSolicitudDePago(
               jugadorJuegoEnBucle.id,
               turno_actualizado.id,
@@ -779,22 +824,52 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
               juego.nombre,
               jugadorEnBucle.nombre
             );
-
-            message = defaultFinOfertas(
-              jugadorEnBucle.client_token,
-              id_juego,
-              jugador_juego_ganador.id,
-              jugadorJuegoEnBucle.id,
-              juego.nombre,
-              jugador_ganador.nombre,
-              monto_pujado_para_ganar,
-              juego.moneda
-            );
           }
 
-          require("util").inspect.defaultOptions.depth = null;
-          // console.log({ EnviandoNotificacion: message });
-          sendFcmMessage(message);
+          // Empezamos a notificar solo a los que tienen token
+          if (jugadorEnBucle.client_token !== "") {
+            console.log({
+              NOTIFICA_CON_TOKEN: `(jugadorEnBucle !== null && jugadorEnBucle.client_token !== "")`,
+            });
+            let message;
+
+            // Si el jugador seleccionado es el ganador del turno, armamos un mensaje personalizado para él en caso de que tenga o no tenga QR subido
+            if (jugadorEnBucle.id === jugador_juego_ganador.id_jugador) {
+              console.log({
+                ES_EL_PUTO_GANADOR:
+                  "if (jugadorEnBucle.id === jugador_juego_ganador.id_jugador)",
+              });
+              message = defaultGanadorDeTurno(
+                jugador_ganador.id,
+                jugadorJuegoEnBucle.id,
+                jugador_ganador.qr !== "",
+                monto_pujado_para_ganar,
+                juego.moneda,
+                jugadorEnBucle.client_token
+              );
+            } else {
+              // Si no es el ganador del turno, registramos una solicitud de pago para el jugador en bucle y luego lo notificamos
+              console.log({
+                NO_ES_EL_PUTO_GANADOR:
+                  "else if (jugadorEnBucle.id === jugador_juego_ganador.id_jugador)",
+              });
+
+              message = defaultFinOfertas(
+                jugadorEnBucle.client_token,
+                id_juego,
+                jugador_juego_ganador.id,
+                jugadorJuegoEnBucle.id,
+                juego.nombre,
+                jugador_ganador.nombre,
+                monto_pujado_para_ganar,
+                juego.moneda
+              );
+            }
+
+            require("util").inspect.defaultOptions.depth = null;
+            // console.log({ EnviandoNotificacion: message });
+            sendFcmMessage(message);
+          }
         }
       }
 
@@ -834,91 +909,6 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
       );
     }
   }
-};
-
-const registrarSolicitudDePago = async (
-  id_jugador_juego_iterando: number,
-  id_turno: number,
-  monto_a_pagar: number,
-  moneda: Moneda,
-  nombre_juego: string,
-  nombre_jugador: string
-) => {
-  //Si no existe ya una orden de pago para ese jugador con ese turno, entonces registramos
-
-  const existe_pago = await prisma.pagos.findFirst({
-    where: {
-      id_jugador_juego: id_jugador_juego_iterando,
-      tipo_pago: "Turno",
-      pagos_turnos: {
-        some: {
-          id_turno,
-        },
-      },
-    },
-  });
-
-  console.log({ existe_pago });
-
-  // No existe la orden de pago, procedemos a registrar una
-  if (existe_pago === null) {
-    const pago = await prisma.pagos.create({
-      data: {
-        id_jugador_juego: id_jugador_juego_iterando,
-        monto: monto_a_pagar,
-        detalle: `Cobro de ${monto_a_pagar} ${moneda}. del juego ${nombre_juego} para ${nombre_jugador}`,
-      },
-    });
-    console.log({ SolicitudDePago: pago });
-  }
-
-  /**
-   * 1. Obtenemos el ganador y la puja del ganador
-   */
-
-  // const turno = await obtenerTurnoPorId(id_turno);
-
-  // if (turno && turno.estado_turno === "TiempoOfertasFinalizado") {
-  //   // Si no se ha especificado el ID del ganador retornamos una excepción
-  //   if (turno.id_ganador_jugador_juego === null) {
-  //     throw new HttpException(
-  //       HttpStatusCodes400.BAD_REQUEST,
-  //       "No se ha establecido el ID del ganador en la tabla Turnos"
-  //     );
-  //   }
-  //   // Obtenemos el id del jugador ganador del turno
-  //   const id_jugador_juego_ganador = turno.id_ganador_jugador_juego;
-
-  //   // Obtenemos los participantes del juego
-  //   const participantes = await participantesDeJuego(turno.id_juego);
-
-  //   // Iteramos cada jugador_juego para generarle una orden de pago exceptuando al ganador del turno
-  //   if (participantes.length > 0) {
-  //     participantes.forEach(async (jugador_juego) => {
-
-  //       // Si el jugador_juego que estamos iterando NO es el ganador del turno, le generamos una orden de pago y luego lo notificamos
-  //       if (jugador_juego.id_jugador !== id_jugador_juego_ganador) {
-
-  //       } else {
-  //         // El jugador_juego que estamos iterando es el ganador, no hacemos nada
-  //       }
-  //     });
-  //   } else {
-  //     throw new HttpException(HttpStatusCodes400.BAD_REQUEST, "");
-  //   }
-  // } else {
-  //   if (!turno) {
-  //     throw new HttpException(
-  //       HttpStatusCodes400.BAD_REQUEST,
-  //       "No se encontró el turno con el ID especificado"
-  //     );
-  //   } else {
-  //     throw new HttpException(
-  //       HttpStatusCodes400.BAD_REQUEST,
-  //       "El turno especificado no está en Tiempo de Ofertas Finalizado"
-  //     );
-  //   }
-  // }
 };
 
 export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
