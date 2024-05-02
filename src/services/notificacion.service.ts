@@ -815,14 +815,14 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
 
         if (jugadorEnBucle !== null) {
           // Registramos la solicitud de pago solo si el jugador en bucle no es el ganador del turno
-          if (jugadorEnBucle.id !== jugador_juego_ganador.id_jugador) {
+          if (jugadorJuegoEnBucle.id !== jugador_juego_ganador.id) {
             await registrarSolicitudDePago(
               jugadorJuegoEnBucle.id,
               turno_actualizado.id,
               monto_a_pagar,
               juego.moneda,
               juego.nombre,
-              jugadorEnBucle.nombre
+              jugador_ganador.nombre
             );
           }
 
