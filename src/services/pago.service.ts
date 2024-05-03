@@ -48,11 +48,23 @@ export const crearPagos_Turnos = async (
   detalle: string = ""
 ) => {
   const turno = await obtenerTurnoPorId(id_turno);
-
   if (!turno) {
     throw new HttpException(
       HttpStatusCodes400.BAD_REQUEST,
       "Turno no encontrado"
+    );
+  }
+  const jugador_juego_remintente = await prisma.jugadores_Juegos.findFirst({
+    where: {
+      id_juego: turno.id_juego,
+      id_jugador: id_jugador_remitente,
+    },
+  });
+
+  if (!jugador_juego_remintente) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Jugador_Juego del Remitente no encontrado en el juego"
     );
   }
 
@@ -95,7 +107,7 @@ export const crearPagos_Turnos = async (
 
   const solicitudPago = await prisma.pagos.findFirst({
     where: {
-      id_jugador_juego: id_jugador_juego_destinatario,
+      id_jugador_juego: jugador_juego_remintente.id,
       tipo_pago: "Turno",
       NOT: {
         pagos_turnos: {
@@ -130,7 +142,8 @@ export const crearPagos_Turnos = async (
     monto_pagado,
     detalle
   );
-
+  require("util").inspect.defaultOptions.depth = null;
+  console.log({ MensajeNotificacionDePago: message });
   sendFcmMessage(message);
 
   return pago_turno;
