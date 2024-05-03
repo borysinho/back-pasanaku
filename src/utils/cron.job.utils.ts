@@ -52,7 +52,9 @@ export const programarNotificarInicioDePagos = (
   // Programamos el evento
   try {
     console.log(
-      `Programando las notificaciones para el inicio de los Pagos para el turno id:${id_turno} en fecha ${fechaHora.toLocaleDateString()}`
+      `Programando las notificaciones para el inicio de los Pagos para el turno id:${id_turno} en fecha ${
+        fechaHora.toLocaleDateString
+      } ${fechaHora.toLocaleTimeString()}`
     );
     cron.schedule(expr, async function () {
       console.log(

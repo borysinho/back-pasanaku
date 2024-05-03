@@ -1,7 +1,12 @@
 import { Prisma } from "@prisma/client";
 import prisma from "./prisma.service";
 import { HttpException } from "../exceptions";
-import { HttpStatusCodes400 } from "../utils";
+import {
+  HttpStatusCodes400,
+  fechaHoraActual,
+  programarNotificarInicioDePagos,
+  sumarSegundosAFecha,
+} from "../utils";
 import { buscarInvitado } from "./invitado.service";
 
 // const prisma = new PrismaClient();
@@ -102,6 +107,52 @@ export const obtenerJugadores = async () => {
   return jugadores;
 };
 
+const actualizarTurnoSiCorresponde = async (id_jugador: number) => {
+  // Validamos si tiene registrado su QR y además si el es ganador de un turno que está en estado "TiempoEsperandoQR", entonces cambiamos el turno a "TiempoPagosTurnos" e iniciamos el tiempo de pagos
+  // Obtenemos un listado de los turnos que están en estado "TiempoEsperandoQR" y que el jugador es ganador
+
+  console.log("Actualizando turno si corresponde");
+  const jugador_juego = await prisma.jugadores_Juegos.findMany({
+    where: {
+      id_jugador,
+    },
+  });
+
+  jugador_juego.forEach(async (jugador_en_juego) => {
+    const turnos_ganador_jugador = await prisma.turnos.findMany({
+      where: {
+        estado_turno: "TiempoEsperandoQR",
+        id_ganador_jugador_juego: jugador_en_juego.id,
+      },
+    });
+
+    console.log({ horaActual: fechaHoraActual() });
+    console.log({ jugador_en_juego });
+    console.log({ turnos_ganador_jugador });
+
+    if (turnos_ganador_jugador.length > 0) {
+      // Actualizamos el turno a "TiempoPagosTurnos" y actualizamos la fecha de inicio de pagos
+      turnos_ganador_jugador.forEach(async (turno_en_bucle) => {
+        const turno = await prisma.turnos.update({
+          where: {
+            id: turno_en_bucle.id,
+          },
+          data: {
+            estado_turno: "TiempoPagosTurnos",
+            fecha_inicio_pago: fechaHoraActual(),
+          },
+        });
+        console.log({ TURNOENESPERA_QR: turno });
+
+        // Programamos el fin de tiempo de pagos
+        programarNotificarInicioDePagos(
+          sumarSegundosAFecha(fechaHoraActual(), 5),
+          turno.id
+        );
+      });
+    }
+  });
+};
 export const actualizarJugador = async (
   { nombre, contrasena, qr }: Prisma.JugadoresUpdateInput,
   { correo, telf }: Prisma.InvitadosUpdateInput,
@@ -133,6 +184,8 @@ export const actualizarJugador = async (
         invitado: true,
       },
     });
+
+    await actualizarTurnoSiCorresponde(id);
 
     return jugador;
   } else {
