@@ -75,12 +75,25 @@ export const obtenerTodosLosTurnos = async () => {
   return await prisma.turnos.findMany({});
 };
 
-export const obtenerGanadorDeturno = async (id_turno: number) => {
+export const obtenerUnTurnoYElJugadorGanadorDelTurno = async (
+  id_turno: number
+) => {
   const turno = await obtenerTurnoPorId(id_turno);
   if (turno != null) {
     if (turno.id_ganador_jugador_juego !== null) {
-      const jugador = await obtenerJugador(turno.id_ganador_jugador_juego);
-      return { jugador, turno };
+      const jugador_juego = await buscarJugadorJuegoPorId(
+        turno.id_ganador_jugador_juego
+      );
+
+      if (jugador_juego != null) {
+        const jugador = await obtenerJugador(jugador_juego.id_jugador);
+        return { jugador, turno };
+      } else {
+        throw new HttpException(
+          HttpStatusCodes400.BAD_REQUEST,
+          `No se ha podido obtener el jugador con el ID de jugador_juego: ${turno.id_ganador_jugador_juego} del turno`
+        );
+      }
     } else {
       throw new HttpException(
         HttpStatusCodes400.BAD_REQUEST,
