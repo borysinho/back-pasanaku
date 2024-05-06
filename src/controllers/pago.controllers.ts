@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { catchedAsync } from "../exceptions";
 import {
   crearPagos_Turnos,
-  obtenerPagosDeJugador_JuegoEnTurno,
+  obtenerPago_TurnosDeJugador_JuegoEnTurno,
+  obtenerPagosRealizadosPorJugador_JuegoEnUnJuegoPorConceptoTurno,
   obtenerPagosTurnos,
   obtenerSolicitudesDePagoDeJugador_Juego,
 } from "../services";
@@ -23,7 +24,7 @@ const obtenerPagosDeJugador_JuegoEnUnTurnoEspecifico = async (
 ) => {
   const { id_jugador_juego, id_turno } = req.params;
 
-  const pagos = await obtenerPagosDeJugador_JuegoEnTurno(
+  const pagos = await obtenerPago_TurnosDeJugador_JuegoEnTurno(
     parseInt(id_jugador_juego),
     parseInt(id_turno)
   );
@@ -59,6 +60,19 @@ const obtenerSolicitudesDePagoDesdeUnJugador_Juego = async (
   response(res, HttpStatusCodes200.ACCEPTED, pagos);
 };
 
+const obtenerSolicitudesDePagoDeJugador_JuegoParaUnTurnoEspecificoPorConceptoTurno =
+  async (req: Request, res: Response) => {
+    const { id_jugador_juego, id_turno } = req.params;
+
+    const pagos =
+      await obtenerPagosRealizadosPorJugador_JuegoEnUnJuegoPorConceptoTurno(
+        parseInt(id_jugador_juego),
+        parseInt(id_turno)
+      );
+
+    response(res, HttpStatusCodes200.ACCEPTED, pagos);
+  };
+
 export default {
   obtenerPagosDeUnTurno: catchedAsync(obtenerPagosDeUnTurno),
   obtenerPagosDeJugador_JuegoEnUnTurnoEspecifico: catchedAsync(
@@ -68,4 +82,8 @@ export default {
   obtenerSolicitudesDePagoDesdeUnJugador_Juego: catchedAsync(
     obtenerSolicitudesDePagoDesdeUnJugador_Juego
   ),
+  obtenerSolicitudesDePagoDeJugador_JuegoParaUnTurnoEspecificoPorConceptoTurno:
+    catchedAsync(
+      obtenerSolicitudesDePagoDeJugador_JuegoParaUnTurnoEspecificoPorConceptoTurno
+    ),
 };

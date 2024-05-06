@@ -25,6 +25,10 @@ class PagosRoutes {
       "/jugadores_juegos/:id_jugador_juego/turnos/:id_turno/pagos",
       pagoController.crearPagoDeUnTurno
     );
+    this.router.get(
+      "/jugadores_juegos/:id_jugador_juego/turnos/:id_turno/solicitudpagoturno",
+      pagoController.obtenerSolicitudesDePagoDeJugador_JuegoParaUnTurnoEspecificoPorConceptoTurno
+    );
   }
 }
 

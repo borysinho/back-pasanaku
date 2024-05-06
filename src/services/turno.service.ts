@@ -256,7 +256,6 @@ export const registrarOferta = async (
         "No es tiempo de ofertas."
       );
     }
-    console.log({ esTiempoDeOfertas });
   } else {
     if (!turno) {
       throw new HttpException(

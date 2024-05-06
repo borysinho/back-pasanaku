@@ -639,6 +639,7 @@ const registrarSolicitudDePago = async (
 };
 
 export const notificarGanadorDeTurno = async (id_juego: number) => {
+  // TODO Cuando se gana de manera randómica, sale que he ganado con 0 Bs
   // Obtenemos el turno que se está jugando en el momento
 
   console.log(`NOTIFICANDOOOOOOOOOOOOOOOOOOO GANADOR DE TURNO ${id_juego}`);

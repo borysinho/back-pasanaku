@@ -22,22 +22,19 @@ export const obtenerPagosTurnos = async (id_turno: number) => {
   return pagos_turnos;
 };
 
-export const obtenerPagosDeJugador_JuegoEnTurno = async (
+export const obtenerPago_TurnosDeJugador_JuegoEnTurno = async (
   id_jugador_juego: number,
   id_turno: number
 ) => {
-  const pagos = await prisma.pagos.findMany({
+  const pagos_turnos = await prisma.pagosTurnos.findMany({
     where: {
-      id_jugador_juego,
-      pagos_turnos: {
-        some: {
-          id_turno,
-        },
+      pago: {
+        id_jugador_juego,
       },
+      id_turno,
     },
   });
-
-  return pagos;
+  return pagos_turnos;
 };
 
 export const crearPagos_Turnos = async (
@@ -164,3 +161,41 @@ export const obtenerSolicitudesDePagoDeJugador_Juego = async (
 
   return pagos;
 };
+
+export const obtenerSolicitudesDePagoDeJugador_JuegoEnTurno = async (
+  id_jugador_juego: number,
+  id_turno: number
+) => {
+  const pagos = await prisma.pagos.findMany({
+    where: {
+      id_jugador_juego,
+      tipo_pago: "Turno",
+      pagos_turnos: {
+        some: {
+          id_turno,
+        },
+      },
+    },
+  });
+
+  return pagos;
+};
+
+export const obtenerPagosRealizadosPorJugador_JuegoEnUnJuegoPorConceptoTurno =
+  async (id_jugador_juego: number, id_juego: number) => {
+    const pagos = await prisma.pagos.findMany({
+      where: {
+        id_jugador_juego,
+        tipo_pago: "Turno",
+        pagos_turnos: {
+          some: {
+            turno: {
+              id_juego,
+            },
+          },
+        },
+      },
+    });
+
+    return pagos;
+  };
