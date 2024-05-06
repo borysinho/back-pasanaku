@@ -391,6 +391,7 @@ export const iniciarTurno = async (
     // Obtenemos todos los turnos del juego que no hayan finalizado
     const turnosQueNoHanFinalizado = await prisma.turnos.findMany({
       where: {
+        id_juego,
         NOT: {
           estado_turno: "Finalizado",
         },

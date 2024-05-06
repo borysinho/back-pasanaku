@@ -27,14 +27,11 @@ import {
   HttpStatusCodes400,
   HttpStatusCodes500,
   sumarSegundosAFecha,
-  formatearTiempo,
   defaultFinOfertas,
   defaultInvitacionAJuego,
   defaultGanadorDeTurno,
   defaultInicioDePagos,
   programarNotificarInicioDePagos,
-  // programarDeterminarGanadorDeJuego,
-  // programarDeterminarSiLosPagosDeTurnosFueronRealizados,
   defaultInicioDePagosAlGanador,
   programarFinDeTiempoDePagos,
   defaultFinDeTiempoDePagos,
@@ -45,14 +42,12 @@ import { defaultInicioOfertas } from "../utils";
 import {
   obtenerCuentaCreadaDeUnInvitado,
   obtenerJugador,
-  obtenerJugadores,
   obtenerJugadoresDeJuego,
   obtenerJugadores_JuegosDeUnJuego,
 } from "./jugador.service";
-import { obtenerTurnoPorId, obtenerTurnosDeJuego } from "./turno.service";
+import { obtenerTurnoPorId } from "./turno.service";
 import {
   buscarJugadorJuego,
-  buscarJugadorJuegoPorId,
   obtenerCreadorDeJuego,
   obtenerJuego,
 } from "./juego.service";
@@ -809,9 +804,6 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
 
           // Empezamos a notificar solo a los que tienen token
           if (jugadorEnBucle.client_token !== "") {
-            console.log({
-              NOTIFICA_CON_TOKEN: `(jugadorEnBucle !== null && jugadorEnBucle.client_token !== "")`,
-            });
             let message;
 
             // Si el jugador seleccionado es el ganador del turno, armamos un mensaje personalizado para él en caso de que tenga o no tenga QR subido
@@ -825,7 +817,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
                 jugadorEnBucle.client_token
               );
             } else {
-              // Si no es el ganador del turno, registramos una solicitud de pago para el jugador en bucle y luego lo notificamos
+              // Si no es el ganador del turno, armamos otro mensaje personalizado de acuerdo al monto a pagar. Si es 0, entonces el turno se obtuvo de manera aleatoria
 
               message = defaultFinOfertas(
                 jugadorEnBucle.client_token,

@@ -90,7 +90,6 @@ export const programarFinDeTiempoDePagos = (
     );
     cron.schedule(expr, async function () {
       console.log(`Tiempo de Pagos Finalizado para el turno ${id_turno}.`);
-      // TODO - Implementar la lógica para notificar a los jugadores que no realizaron el pago
       await notificarFinDePagosDeTurnos(id_turno);
       console.log("Procesode Fin de Pagos terminado.");
     });
