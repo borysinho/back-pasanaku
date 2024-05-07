@@ -11,7 +11,7 @@ import {
 } from "../services/juego.service";
 import { HttpStatusCodes200, HttpStatusCodes400, response } from "../utils";
 import { catchedAsync } from "../exceptions";
-import { obtenerPujas } from "../services";
+import { obtenerPujas, obtenerUltimoTurnoDeJuego } from "../services";
 
 const crear = async (req: Request, res: Response) => {
   const { id } = req.params;

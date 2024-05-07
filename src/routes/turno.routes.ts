@@ -24,6 +24,11 @@ class TurnoRoutes {
     );
 
     this.router.get(
+      "/jugadores/juegos/:id_juego/turnos/ultimo",
+      turnoController.obtenerElUltimoTurnoDeUnJuegoEspecificado
+    );
+
+    this.router.get(
       "/jugadores/juegos/:id_juego/turnos/:id_turno",
       turnoController.obtenerTurnosJuego
     );

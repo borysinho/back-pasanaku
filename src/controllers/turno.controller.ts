@@ -4,6 +4,7 @@ import {
   iniciarTurno,
   obtenerTodosLosTurnos,
   obtenerTurnosDeJuego,
+  obtenerUltimoTurnoDeJuego,
   obtenerUnTurnoYElJugadorGanadorDelTurno,
   registrarOferta,
 } from "../services";
@@ -71,6 +72,15 @@ const iniciarUnTurno = async (req: Request, res: Response) => {
   }
 };
 
+const obtenerElUltimoTurnoDeUnJuegoEspecificado = async (
+  req: Request,
+  res: Response
+) => {
+  const { id_juego } = req.params;
+  const turno = await obtenerUltimoTurnoDeJuego(parseInt(id_juego));
+  response(res, HttpStatusCodes200.OK, turno);
+};
+
 export default {
   eliminarTurnosJuego: catchedAsync(eliminarTurnosJuego),
   obtenerTurnosJuego: catchedAsync(obtenerTurnosJuego),
@@ -78,4 +88,7 @@ export default {
   obtenerTodosTurnos: catchedAsync(obtenerTodosTurnos),
   iniciarUnTurno: catchedAsync(iniciarUnTurno),
   establecerPuja: catchedAsync(establecerPuja),
+  obtenerElUltimoTurnoDeUnJuegoEspecificado: catchedAsync(
+    obtenerElUltimoTurnoDeUnJuegoEspecificado
+  ),
 };

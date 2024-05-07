@@ -458,3 +458,16 @@ Detalles: ${turnosQueNoHanFinalizado.toString()}`
     );
   }
 };
+
+export const obtenerUltimoTurnoDeJuego = async (id_juego: number) => {
+  const turno = await prisma.turnos.findFirst({
+    where: {
+      id_juego,
+    },
+    orderBy: {
+      nro_turno: "desc",
+    },
+  });
+
+  return turno;
+};
