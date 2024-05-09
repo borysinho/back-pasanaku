@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import authController from "../controllers/auth.token.controller";
+import authController from "../controllers/auth.token.controllers";
 import { execSync } from "child_process";
 import { response } from "../utils";
 
