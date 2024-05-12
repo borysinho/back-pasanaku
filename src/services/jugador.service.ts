@@ -153,6 +153,7 @@ const actualizarTurnoSiCorresponde = async (id_jugador: number) => {
     }
   });
 };
+
 export const actualizarJugador = async (
   { nombre, contrasena, qr }: Prisma.JugadoresUpdateInput,
   { correo, telf }: Prisma.InvitadosUpdateInput,
@@ -359,8 +360,52 @@ export const obtenerJugadores_JuegosDeUnJuego = async (id_juego: number) => {
     },
   });
 
-  console.log({ jugadores_juegos });
   return jugadores_juegos;
+};
+
+export const obtenerJugador_JuegoPorId = async (id_jugador_juego: number) => {
+  const jugador_juego = await prisma.jugadores_Juegos.findUnique({
+    where: {
+      id: id_jugador_juego,
+    },
+  });
+
+  return jugador_juego;
+};
+
+export const obtenerJugadorExpulsadoDesdeJugador_Juego = async (
+  id_jugador_juego: number
+) => {
+  const jugador = await prisma.jugadores.findMany({
+    where: {
+      Expulsados: {
+        some: {
+          id_jugador_juego,
+        },
+      },
+    },
+  });
+
+  if (jugador.length === 1) {
+    return jugador[0];
+  } else {
+    return null;
+  }
+};
+
+export const obtenerCreadorDeJuego = async (id_juego: number) => {
+  const jugador = await prisma.jugadores.findFirst({
+    where: {
+      jugadores_juegos: {
+        some: {
+          id_juego,
+          rol: "Creador",
+        },
+      },
+    },
+  });
+
+  return jugador;
 };
 
 export const actualizarTokenFireBase = async (

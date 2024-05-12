@@ -93,18 +93,19 @@ model Turnos {
   id_juego                 Int
   id_ganador_jugador_juego Int?
 
-  estado_turno      EstadoTurnos @default(Iniciado)
-  fecha_turno       DateTime?    @default(now())
-  fecha_inicio_puja DateTime     @default(now())
-  tiempo_puja_seg   Int          @default(240)
-  fecha_inicio_pago DateTime     @default(now())
-  tiempo_pago_seg   Int          @default(240)
-  nro_turno         Int          @default(1)
+  estado_turno           EstadoTurnos @default(Iniciado)
+  fecha_turno            DateTime?    @default(now())
+  fecha_inicio_puja      DateTime     @default(now())
+  tiempo_puja_seg        Int          @default(240)
+  fecha_inicio_pago      DateTime     @default(now())
+  tiempo_pago_seg        Int          @default(240)
+  tiempo_pago_multas_seg Int          @default(240)
+  nro_turno              Int          @default(1)
   // El saldo restante es el monto_base_de_cada_turno * cantidad_turnos_restantes (incluido el actual) 
-  saldo_restante    Int          @default(0)
+  saldo_restante         Int          @default(0)
   // Es el 8% del saldo restante
-  monto_minimo_puja Int          @default(0)
-  monto_pago        Int          @default(0)
+  monto_minimo_puja      Int          @default(0)
+  monto_pago             Int          @default(0)
 
   jugador_grupo_turno Pujas[]
   pagos_turnos        PagosTurnos[]
@@ -116,13 +117,14 @@ model Jugadores {
 
   invitado Invitados @relation(fields: [id_invitado], references: [id], onDelete: NoAction)
 
-  jugadores_juegos Jugadores_Juegos[]
-
   nombre       String
   usuario      String @unique
   contrasena   String
   client_token String @default("")
   qr           String @default("")
+
+  jugadores_juegos Jugadores_Juegos[]
+  Expulsados       Expulsados[]
 }
 
 enum Roles {
@@ -132,17 +134,30 @@ enum Roles {
 
 enum Estado_Jugadores_Juego {
   Participando
-  RetiroForzoso
-  RetiroVoluntario
+  RemplazandoExpulsado
+}
+
+model Expulsados {
+  id_jugador       Int
+  id_jugador_juego Int
+
+  detalle String?
+  fecha   DateTime @default(now()) @db.Date
+
+  jugador       Jugadores        @relation(fields: [id_jugador], references: [id], onDelete: NoAction)
+  jugador_juego Jugadores_Juegos @relation(fields: [id_jugador_juego], references: [id], onDelete: NoAction)
+
+  @@id(name: "id", fields: [id_jugador, id_jugador_juego])
 }
 
 model Jugadores_Juegos {
   id Int @id @default(autoincrement())
 
-  jugador Jugadores              @relation(fields: [id_jugador], references: [id], onDelete: Cascade)
-  juego   Juegos                 @relation(fields: [id_juego], references: [id], onDelete: Cascade)
-  rol     Roles                  @default(Jugador)
-  estado  Estado_Jugadores_Juego @default(Participando)
+  juego   Juegos     @relation(fields: [id_juego], references: [id], onDelete: Cascade)
+  jugador Jugadores? @relation(fields: [id_jugador], references: [id])
+
+  rol    Roles                  @default(Jugador)
+  estado Estado_Jugadores_Juego @default(Participando)
 
   id_jugador Int
   id_juego   Int
@@ -152,6 +167,9 @@ model Jugadores_Juegos {
   jugador_grupo_turno Pujas[]
   Turnos              Turnos[]
   Pagos               Pagos[]
+  Expulsados          Expulsados[]
+
+  // jugadoresId Int?
 }
 
 model Pujas {

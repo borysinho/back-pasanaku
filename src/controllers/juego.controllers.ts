@@ -7,7 +7,7 @@ import {
   obtenerJuegosConEstado,
   obtenerJuegosDeJugador,
   obtenerJuego,
-  actualizarJugadorJuego,
+  actualizarJuegoConDatosDelCreador,
 } from "../services/juego.service";
 import { HttpStatusCodes200, HttpStatusCodes400, response } from "../utils";
 import { catchedAsync } from "../exceptions";
@@ -48,7 +48,7 @@ const actualizarJuegoDeCreador = async (req: Request, res: Response) => {
   const { id_jugador, id_juego } = req.params;
   const { nombre, fecha_inicio, monto_total, moneda } = req.body;
   const date = new Date(fecha_inicio);
-  const juego = await actualizarJugadorJuego(
+  const juego = await actualizarJuegoConDatosDelCreador(
     parseInt(id_jugador),
     parseInt(id_juego),
     {

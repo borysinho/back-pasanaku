@@ -209,8 +209,13 @@ export const aceptarInvitacion = async (
     );
   }
 };
-
-export const actualizarJugadorJuego = async (
+/**
+ * Actualiza el estado del juego especificando el id del creador del juego y el juego que desea modificar
+ * @param id_jugador Debe ser el ID del creador del juego
+ * @param id_juego El ID del juego que se desea actualizar
+ * @returns Devuelve el juego actualizado
+ */
+export const actualizarJuegoConDatosDelCreador = async (
   id_jugador: number,
   id_juego: number,
   { nombre, fecha_inicio, monto_total, moneda }: Prisma.JuegosUpdateInput
@@ -242,9 +247,23 @@ export const actualizarJugadorJuego = async (
   } else {
     throw new HttpException(
       HttpStatusCodes400.BAD_REQUEST,
-      "Validar que el rol del Jugador en el Juego especificado sea Creador"
+      "Validar que primero haya ingresado el Creador del juego"
     );
   }
+};
+
+export const actualizarJugador_Juego = async (
+  id_jugador_juego: number,
+  data: Prisma.Jugadores_JuegosUncheckedUpdateInput
+) => {
+  const jugador_juego = await prisma.jugadores_Juegos.update({
+    where: {
+      id: id_jugador_juego,
+    },
+    data,
+  });
+
+  return jugador_juego;
 };
 
 export const eliminarJuegoDeUnCreador = async (
@@ -330,20 +349,20 @@ export const obtenerJuegosDeJugador = async (id_jugador: number) => {
   return juegos;
 };
 
-export const obtenerCreadorDeJuego = async (id_juego: number) => {
-  const creador = await prisma.jugadores.findFirst({
-    where: {
-      jugadores_juegos: {
-        some: {
-          id_juego,
-          rol: "Creador",
-        },
-      },
-    },
-  });
+// export const obtenerCreadorDeJuego = async (id_juego: number) => {
+//   const creador = await prisma.jugadores.findFirst({
+//     where: {
+//       jugadores_juegos: {
+//         some: {
+//           id_juego,
+//           rol: "Creador",
+//         },
+//       },
+//     },
+//   });
 
-  return creador;
-};
+//   return creador;
+// };
 
 export const obtenerJuegosConEstado = async (
   id_jugador: number,

@@ -35,23 +35,26 @@ import {
   defaultInicioDePagosAlGanador,
   programarFinDeTiempoDePagos,
   defaultFinDeTiempoDePagos,
+  programarInicioDeTiempoDePagoDeMultas,
+  fechaHoraActual,
+  TFBMessage,
+  defaultNotificarTodosLosPagosTurnosCompletados,
+  defaultNotificarFinDeJuego,
 } from "../utils";
 import Mail from "nodemailer/lib/mailer";
 
 import { defaultInicioOfertas } from "../utils";
 import {
+  obtenerCreadorDeJuego,
   obtenerCuentaCreadaDeUnInvitado,
   obtenerJugador,
   obtenerJugadoresDeJuego,
   obtenerJugadores_JuegosDeUnJuego,
 } from "./jugador.service";
 import { obtenerTurnoPorId } from "./turno.service";
-import {
-  buscarJugadorJuego,
-  obtenerCreadorDeJuego,
-  obtenerJuego,
-} from "./juego.service";
+import { buscarJugadorJuego, obtenerJuego } from "./juego.service";
 import { Console } from "console";
+import { validarQueTodosLosJugadores_JuegosHayanPagadoElTurno } from "./pago.service";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -637,7 +640,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
   // TODO Cuando se gana de manera randómica, sale que he ganado con 0 Bs
   // Obtenemos el turno que se está jugando en el momento
 
-  console.log(`NOTIFICANDOOOOOOOOOOOOOOOOOOO GANADOR DE TURNO ${id_juego}`);
+  console.log(`NOTIFICANDO GANADOR DE TURNO ${id_juego}`);
 
   // Obtenemos los turnos de un juego que están en tiempo de ofertas
   const turnoEnTiempoDeOfertas = await prisma.turnos.findMany({
@@ -1029,9 +1032,14 @@ export const notificarFinDePagosDeTurnos = async (id_turno: number) => {
         id: id_turno,
       },
       data: {
-        estado_turno: "Finalizado",
+        estado_turno: "TiempoPagosMultas",
       },
     });
+
+    programarInicioDeTiempoDePagoDeMultas(
+      sumarSegundosAFecha(fechaHoraActual(), 10),
+      id_turno
+    );
 
     return { turno };
   } else {
@@ -1039,5 +1047,96 @@ export const notificarFinDePagosDeTurnos = async (id_turno: number) => {
       HttpStatusCodes400.BAD_REQUEST,
       "No se encontró un turno con el ID indicado"
     );
+  }
+};
+
+export const notificarTodosLosPagosFueronCompletados = async (
+  id_turno: number
+) => {
+  const turno = await prisma.turnos.findUnique({
+    where: {
+      id: id_turno,
+    },
+  });
+
+  if (!turno) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No se encontró un turno con el ID indicado"
+    );
+  }
+
+  const jugadores_juegos = await prisma.jugadores_Juegos.findMany({
+    where: {
+      id_juego: turno.id_juego,
+    },
+  });
+
+  if (jugadores_juegos.length === 0) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No se encontraron jugadores que participen en el juego"
+    );
+  }
+
+  for (const key in jugadores_juegos) {
+    const jugador_juego = jugadores_juegos[key];
+    const jugador = await prisma.jugadores.findUnique({
+      where: {
+        id: jugador_juego.id_jugador,
+      },
+    });
+
+    if (jugador && jugador.client_token !== "") {
+      const message = defaultNotificarTodosLosPagosTurnosCompletados(
+        jugador.id,
+        jugador.client_token
+      );
+
+      sendFcmMessage(message);
+    }
+  }
+};
+
+export const notificarFinDeJuego = async (id_juego: number) => {
+  const juego = await obtenerJuego(id_juego);
+
+  if (!juego) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No se encontró un juego con el ID indicado"
+    );
+  }
+
+  const jugadores_juegos = await prisma.jugadores_Juegos.findMany({
+    where: {
+      id_juego,
+    },
+  });
+
+  if (jugadores_juegos.length === 0) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "No se encontraron jugadores que participen en el juego"
+    );
+  }
+
+  for (const key in jugadores_juegos) {
+    const jugador_juego = jugadores_juegos[key];
+    const jugador = await prisma.jugadores.findUnique({
+      where: {
+        id: jugador_juego.id_jugador,
+      },
+    });
+
+    if (jugador && jugador.client_token !== "") {
+      const message = defaultNotificarFinDeJuego(
+        jugador.id,
+        jugador.client_token,
+        juego.nombre
+      );
+
+      sendFcmMessage(message);
+    }
   }
 };

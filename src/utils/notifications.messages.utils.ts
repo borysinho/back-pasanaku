@@ -246,3 +246,123 @@ export const defaultNotificarPagoAGanador = (
 
   return { message };
 };
+
+export const defaultNotificarTodosLosPagosTurnosCompletados = (
+  id_jugador: number,
+  token: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: "Todos los pagos han sido completados",
+      body: "Todos los pagos del turno han sido completados.",
+    },
+    data: {
+      event: "todos-los-pagos-completados",
+      id_jugador: id_jugador.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};
+
+export const defaultNotificarFinDeJuego = (
+  id_juego: number,
+  token: string,
+  nombre_juego: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: "Fin de juego",
+      body: `El juego ${nombre_juego} ha finalizado.`,
+    },
+    data: {
+      event: "fin-juego",
+      id_juego: id_juego.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};
+
+export const defaultNotificarCreadorRemplazanteNoHaPagadoMulta = (
+  id_jugador_juego: number,
+  token: string,
+  nombreJugadorExpulsado: string,
+  nombreJuego: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: "No se ha pagado la multa",
+      body: `Está remplazando a ${nombreJugadorExpulsado} en el juego ${nombreJuego} y tiene una multa pendiente.
+El juego se ha detenido hasta que realice el pago de su multa.`,
+    },
+    data: {
+      event: "creador-remplazante-no-ha-pagado-multa",
+      id_jugador_juego: id_jugador_juego.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};
+
+export const defaultNotificarJugadorExpulsado = (
+  id_jugador_expulsado: number,
+  id_juego: number,
+  nombreJuego: string,
+  token: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: "Expulsión de juego",
+      body: `Has sido expulsado del juego ${nombreJuego}.`,
+    },
+    data: {
+      event: "jugador-expulsado",
+      id_jugador: id_jugador_expulsado.toString(),
+      id_juego: id_juego.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};
+
+export const defaultNotificarCreadorVaAReemplazar = (
+  id_jugador_creador: number,
+  id_juego: number,
+  nombreJugadorExpulsado: string,
+  nombreJuego: string,
+  token_creador: string
+) => {
+  const message: TFBMessage = {
+    token: token_creador,
+    notification: {
+      title: "Reemplazo de jugador",
+      body: `Vas a reemplazar a ${nombreJugadorExpulsado} en el juego ${nombreJuego} debido a que no pagó su multa.
+En tu lista de juegos aparecerá "reemplazando a" para que puedas identificarlo.`,
+    },
+    data: {
+      event: "creador-va-a-reemplazar",
+      id_jugador_creador: id_jugador_creador.toString(),
+      id_juego: id_juego.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+};

@@ -6,6 +6,8 @@ import notificacionRoutes from "./notificacion.routes";
 import authTokenRoutes from "./auth.token.routes";
 import turnoRouter from "./turno.routes";
 import pagosRouter from "./pagos.routes";
+import multasRouter from "./multas.routes";
+import expulsadosRouter from "./expulsados.routes";
 
 export default class Routes {
   constructor(app: Application) {
@@ -16,5 +18,7 @@ export default class Routes {
     app.use("/api", authTokenRoutes);
     app.use("/api", turnoRouter);
     app.use("/api", pagosRouter);
+    app.use("/api", multasRouter);
+    app.use("/api", expulsadosRouter);
   }
 }

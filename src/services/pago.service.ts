@@ -30,6 +30,7 @@ export const obtenerPago_TurnosDeJugador_JuegoEnTurno = async (
     where: {
       pago: {
         id_jugador_juego,
+        tipo_pago: "Turno",
       },
       id_turno,
     },
@@ -199,3 +200,69 @@ export const obtenerPagosRealizadosPorJugador_JuegoEnUnJuegoPorConceptoTurno =
 
     return pagos;
   };
+
+export const validarQueTodosLosJugadores_JuegosHayanPagadoElTurno = async (
+  id_turno: number
+) => {
+  const turno = await obtenerTurnoPorId(id_turno);
+
+  if (!turno) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Turno no encontrado"
+    );
+  }
+
+  if (turno.id_ganador_jugador_juego === null) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "El turno no tiene un ganador asignado"
+    );
+  }
+
+  const jugador_juego_ganador = await prisma.jugadores_Juegos.findUnique({
+    where: {
+      id: turno.id_ganador_jugador_juego,
+    },
+  });
+
+  if (!jugador_juego_ganador) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Jugador_Juego ganador no encontrado"
+    );
+  }
+
+  const jugadores_juegos = await prisma.jugadores_Juegos.findMany({
+    where: {
+      NOT: {
+        id: jugador_juego_ganador.id,
+      },
+      juego: {
+        turnos: {
+          some: {
+            id: id_turno,
+          },
+        },
+      },
+    },
+  });
+
+  // Validamos que todos los jugadores_juegos hayan pagado el turno
+  for (const key in jugadores_juegos) {
+    const jugador_juego = jugadores_juegos[key];
+
+    const pagos = await obtenerPago_TurnosDeJugador_JuegoEnTurno(
+      jugador_juego.id,
+      id_turno
+    );
+
+    if (pagos.length === 0) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+validarQueTodosLosJugadores_JuegosHayanPagadoElTurno(1);

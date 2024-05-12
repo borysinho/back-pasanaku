@@ -4,6 +4,7 @@ import { obtenerJugador } from "./jugador.service";
 import { HttpException } from "../exceptions";
 import {
   HttpStatusCodes400,
+  defaultNotificarFinDeJuego,
   fechaHoraActual,
   programarDeterminarGanadorDeJuego,
   sumarSegundosAFecha,
@@ -15,7 +16,10 @@ import {
   buscarJugadorJuegoPorId,
   obtenerJuego,
 } from "./juego.service";
-import { notificarInicioOfertas } from "./notificacion.service";
+import {
+  notificarFinDeJuego,
+  notificarInicioOfertas,
+} from "./notificacion.service";
 
 export const crearTurno = async (
   id_juego: number,
@@ -318,7 +322,8 @@ const crearTurnoPreviaValidacion = async (
   cant_jugadores: number,
   tiempo_puja_seg: number,
   tiempo_inicio_pago_seg: number,
-  tiempo_pago_seg: number
+  tiempo_pago_seg: number,
+  tiempo_pago_multas_seg: number
 ) => {
   // Obtenemos el número de turno que toca
   const turnosSortByNumber = await prisma.turnos.findMany({
@@ -363,6 +368,7 @@ const crearTurnoPreviaValidacion = async (
     tiempo_pago_seg,
     saldo_restante,
     monto_minimo_puja,
+    tiempo_pago_multas_seg,
   };
 
   const turno = await actuacrearTurno(0, id_juego, turnoCreate);
@@ -374,7 +380,8 @@ export const iniciarTurno = async (
   id_juego: number,
   tiempo_puja_seg: number,
   tiempo_inicio_pago_seg: number,
-  tiempo_pago_seg: number
+  tiempo_pago_seg: number,
+  tiempo_pago_multas_seg: number
 ) => {
   /**
    * Validaciones para iniciar turno
@@ -411,44 +418,64 @@ Detalles: ${turnosQueNoHanFinalizado.toString()}`
       // Obtenemos todos los turnos que se hayan creado para este juego
       const turnosDeJuego = await obtenerTurnosDeJuego(id_juego);
 
-      // Validamos si no llegamos ya al final de los turnos
+      // Validamos si llegamos ya al final de los turnos
       console.log({ turnosDeJuego, cant_jugadores: juego.cant_jugadores });
-      if (turnosDeJuego.length === juego.cant_jugadores) {
+
+      // Si el juego ya finalizó, no se puede crear un nuevo turno
+      if (juego.estado_juego === "Finalizado") {
         throw new HttpException(
           HttpStatusCodes400.BAD_REQUEST,
           "Ha llegado al máximo de turnos creados"
         );
-        // Hay turnos disponibles, se puede crear uno adicional
       } else {
-        // Si no hay turnos creados, actualizamos el estado del juego a "Iniciado"
-        if (turnosDeJuego.length === 0) {
-          // Actualizamos el estado a "Iniciado"
-          await actualizarJuego(id_juego, { estado_juego: "Iniciado" });
+        // El juego NO ha finalizado, pero ya no se pueden crear más turnos
+        if (turnosDeJuego.length === juego.cant_jugadores) {
+          // Actyalizamos el juego a finalizado
+          const turnoFinDeJuego = prisma.juegos.update({
+            where: {
+              id: id_juego,
+            },
+            data: {
+              estado_juego: "Finalizado",
+            },
+          });
+
+          // Nofiticamos a los jugadores sobre el fin del juego
+          await notificarFinDeJuego(id_juego);
+
+          // Hay turnos disponibles, se puede crear uno adicional
+        } else {
+          // Si no hay turnos creados, actualizamos el estado del juego a "Iniciado"
+          if (turnosDeJuego.length === 0) {
+            // Actualizamos el estado a "Iniciado"
+            await actualizarJuego(id_juego, { estado_juego: "Iniciado" });
+          }
+
+          // Creamos un turno nuevo generando todos los datos necesarios
+          const turno = await crearTurnoPreviaValidacion(
+            id_juego,
+            juego.monto_total,
+            juego.cant_jugadores,
+            tiempo_puja_seg,
+            tiempo_inicio_pago_seg,
+            tiempo_pago_seg,
+            tiempo_pago_multas_seg
+          );
+
+          // Notificamos a los clientes el inicio de las ofertas
+          // await notificarInicioOfertas(id_juego, turno.id);
+
+          // No ejecutamos await para no detener la ejecución del código y que se ejecute en segundo plano
+          notificarInicioOfertas(id_juego, turno.id);
+
+          // Programamos el cierre de las ofertas
+          programarDeterminarGanadorDeJuego(
+            sumarSegundosAFecha(turno.fecha_inicio_puja, turno.tiempo_puja_seg),
+            id_juego
+          );
+
+          return turno;
         }
-
-        // Creamos un turno nuevo generando todos los datos necesarios
-        const turno = await crearTurnoPreviaValidacion(
-          id_juego,
-          juego.monto_total,
-          juego.cant_jugadores,
-          tiempo_puja_seg,
-          tiempo_inicio_pago_seg,
-          tiempo_pago_seg
-        );
-
-        // Notificamos a los clientes el inicio de las ofertas
-        // await notificarInicioOfertas(id_juego, turno.id);
-
-        // No ejecutamos await para no detener la ejecución del código y que se ejecute en segundo plano
-        notificarInicioOfertas(id_juego, turno.id);
-
-        // Programamos el cierre de las ofertas
-        programarDeterminarGanadorDeJuego(
-          sumarSegundosAFecha(turno.fecha_inicio_puja, turno.tiempo_puja_seg),
-          id_juego
-        );
-
-        return turno;
       }
     }
   } else {
