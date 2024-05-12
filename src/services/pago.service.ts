@@ -264,5 +264,3 @@ export const validarQueTodosLosJugadores_JuegosHayanPagadoElTurno = async (
 
   return true;
 };
-
-validarQueTodosLosJugadores_JuegosHayanPagadoElTurno(1);
