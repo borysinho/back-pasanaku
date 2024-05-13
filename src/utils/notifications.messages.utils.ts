@@ -119,14 +119,23 @@ export const defaultGanadorDeTurno = (
   token: string
 ) => {
   const event = tiene_qr ? "fin-ofertas" : "ganador-debe-subir-qr";
-  const body = tiene_qr
-    ? `¡Felicidades! Has ganado el turno con ${monto_puja} ${moneda}.`
-    : `¡Felicidades! Has ganado el turno con ${monto_puja} ${moneda}. 
-Sube tu QR para que los demás jugadores puedan realizar su pago correspondiente.`;
+  let title = "";
+  let body = "";
+  if (tiene_qr) {
+    title = `¡Eres el ganador!`;
+    body = `¡Felicidades! Has ganado el turno con ${monto_puja} ${moneda}.`;
+    if (monto_puja === 0) {
+      body = `¡Felicidades! Has ganado el turno aleatoriamente.`;
+    }
+  } else {
+    title = `Ganaste el turno con ${monto_puja} ${moneda}`;
+    body = `Sube tu QR para que los demás jugadores puedan realizar su pago correspondiente.`;
+  }
+
   const message: TFBMessage = {
     token,
     notification: {
-      title: "¡Eres el ganador!",
+      title,
       body,
     },
     data: {
@@ -181,8 +190,7 @@ export const defaultInicioDePagosAlGanador = (
     token,
     notification: {
       title: `Inicio de pagos para ${nombre_juego}`,
-      body: `Se ha iniciado el tiempo de realizar los pagos del turno.
-Se te notificará conforme vayas recibiendo los pagos.`,
+      body: `Se te notificará conforme vayas recibiendo los pagos.`,
     },
     data: {
       event: "inicio-pagos",
@@ -302,8 +310,32 @@ export const defaultNotificarCreadorRemplazanteNoHaPagadoMulta = (
     token,
     notification: {
       title: "No se ha pagado la multa",
-      body: `Está remplazando a ${nombreJugadorExpulsado} en el juego ${nombreJuego} y tiene una multa pendiente.
-El juego se ha detenido hasta que realice el pago de su multa.`,
+      body: `Estás remplazando a ${nombreJugadorExpulsado} en el juego ${nombreJuego} y tienes una multa pendiente.
+El juego se ha detenido hasta que realices el pago de tu multa.`,
+    },
+    data: {
+      event: "creador-remplazante-no-ha-pagado-multa",
+      id_jugador_juego: id_jugador_juego.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
+};
+
+export const defaultNotificarCreadorNoHaPagadoMulta = (
+  id_jugador_juego: number,
+  token: string,
+  nombreJuego: string
+) => {
+  const message: TFBMessage = {
+    token,
+    notification: {
+      title: "No se ha pagado la multa",
+      body: `Eres el creador del juego ${nombreJuego} y no has pagado tu multa pendiente.
+El juego se ha detenido hasta que realices el pago de tu multa.`,
     },
     data: {
       event: "creador-remplazante-no-ha-pagado-multa",
@@ -353,8 +385,8 @@ export const defaultNotificarCreadorVaAReemplazar = (
     token: token_creador,
     notification: {
       title: "Reemplazo de jugador",
-      body: `Vas a reemplazar a ${nombreJugadorExpulsado} en el juego ${nombreJuego} debido a que no pagó su multa.
-En tu lista de juegos aparecerá "reemplazando a" para que puedas identificarlo.`,
+      body: `Se ha expulsado a ${nombreJugadorExpulsado} en el juego ${nombreJuego} y debes pagar su multa para que el juego continúe.
+En tu lista de juegos podrás identificar un juego como reemplazante.`,
     },
     data: {
       event: "creador-va-a-reemplazar",
@@ -365,4 +397,29 @@ En tu lista de juegos aparecerá "reemplazando a" para que puedas identificarlo.
       priority: "HIGH",
     },
   };
+
+  return { message };
+};
+
+export const defaultNotificarNadiePagoMulta = (
+  id_juego: number,
+  nombreJuego: string,
+  token_creador: string
+) => {
+  const message: TFBMessage = {
+    token: token_creador,
+    notification: {
+      title: "Nadie ha pagado la multa",
+      body: `Nadie ha pagado la multa en el juego ${nombreJuego} y el juego ha finalizado.`,
+    },
+    data: {
+      event: "nadie-pago-multa",
+      id_juego: id_juego.toString(),
+    },
+    android: {
+      priority: "HIGH",
+    },
+  };
+
+  return { message };
 };

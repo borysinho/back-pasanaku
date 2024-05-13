@@ -1,5 +1,6 @@
 import {
   HttpStatusCodes400,
+  defaultNotificarCreadorNoHaPagadoMulta,
   defaultNotificarCreadorRemplazanteNoHaPagadoMulta,
   defaultNotificarCreadorVaAReemplazar,
   defaultNotificarJugadorExpulsado,
@@ -21,12 +22,20 @@ import {
   notificarTodosLosPagosFueronCompletados,
   sendFcmMessage,
 } from "./notificacion.service";
-import { validarQueTodosLosJugadores_JuegosHayanPagadoElTurno } from "./pago.service";
+import {
+  obtenerJugadores_JuegosQueNoHanPagadoElTurno,
+  // obtenerSolicitudesDePagoDeTurnoDeJugador_Juego,
+  validarQueTodosLosJugadores_JuegosHayanPagadoElTurno,
+} from "./pago.service";
 import prisma from "./prisma.service";
 import { Jugadores_Juegos, Pagos, Prisma } from "@prisma/client";
 import { obtenerTurnoPorId } from "./turno.service";
 import { HttpException } from "../exceptions";
-import { actualizarJugador_Juego, obtenerJuego } from "./juego.service";
+import {
+  actualizarJuego,
+  actualizarJugador_Juego,
+  obtenerJuego,
+} from "./juego.service";
 import { crearExpulsado } from "./expulsado.service";
 
 export const srvGetPagosMultas = async (
@@ -154,31 +163,54 @@ export const srvDeletePagosMultas = async (
   return pagoMulta;
 };
 
+const registrarSolicitudesDePagoPorMulta = async (id_turno: number) => {
+  // Obtenemos los jugadores_juegos que no pagaron su turno
+  const jugadores_juegos_no_pagaron =
+    await obtenerJugadores_JuegosQueNoHanPagadoElTurno(id_turno);
+
+  // Obtenemos el valor del turno
+  const turno = await obtenerTurnoPorId(id_turno);
+  if (!turno) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Turno no encontrado"
+    );
+  }
+  // Aplicamos una multa del 20% del valor del turno a los jugadores_juegos que no pagaron
+  // const multa = 0.2;
+  for (const key in jugadores_juegos_no_pagaron) {
+    const jugador_juego_no_pago = jugadores_juegos_no_pagaron[key];
+
+    const multa = turno.monto_pago * 0.2;
+
+    const solicitud_pago = await prisma.pagos.create({
+      data: {
+        id_jugador_juego: jugador_juego_no_pago.id,
+        monto: multa,
+        tipo_pago: "Multa",
+        detalle: "Multa por no pagar turno",
+      },
+    });
+  }
+};
+
 export const inicioDePagoDeMultas = async (id_turno: number) => {
   /**
   1. Al ejecutarse el inicio tiempo de multas, valida si todos pagaron. 
 	1.1 Si todos pagaron, se coloca el estado del turno en finalizado, se notifica a los usuarios que el turno finalizó y que todos los jugadores pagaron sus cuotas correctamente y se programa el inicio del siguiente turno para unos segundos después.
-	1.2 Si no pagaron todos se programa la ejecución del fin de tiempo de multas.
+	1.2 Si no pagaron todos se registra una solicitud de pago por multa y luego se programa la ejecución del fin de tiempo de multas.
    */
   const todos_pagaron =
     await validarQueTodosLosJugadores_JuegosHayanPagadoElTurno(id_turno);
+  console.log({ todos_pagaron });
   if (todos_pagaron) {
-    await prisma.turnos.update({
+    console.log("TODOS PAGARON SUS TURNOS, PROGRAMAMOS EL SIGUIENTE TURNO");
+    const turno = await prisma.turnos.update({
       where: {
         id: id_turno,
       },
       data: {
         estado_turno: "Finalizado",
-      },
-    });
-
-    console.log(
-      "Todos pagaron, se notifica a los jugadores y se programa el siguiente turno"
-    );
-
-    const turno = await prisma.turnos.findUnique({
-      where: {
-        id: id_turno,
       },
     });
 
@@ -188,7 +220,6 @@ export const inicioDePagoDeMultas = async (id_turno: number) => {
         "Turno no encontrado"
       );
     }
-
     // Notificamos a todos los jugadores que los pagos fueron completados
     await notificarTodosLosPagosFueronCompletados(id_turno);
     // Programamos el siguiente turno
@@ -202,10 +233,37 @@ export const inicioDePagoDeMultas = async (id_turno: number) => {
     );
   } else {
     // No todos pagaron, se programa el fin de tiempo de multas
+    console.log(
+      "NO TODOS PAGARON SUS TURNOS, PROGRAMAMOS EL FIN DE TIEMPO DE MULTAS"
+    );
+
+    // Actualizamos el turno a TiempoPagosMultas
+    const turno = await prisma.turnos.update({
+      where: {
+        id: id_turno,
+      },
+      data: {
+        estado_turno: "TiempoPagosMultas",
+      },
+    });
+    if (!turno) {
+      throw new HttpException(
+        HttpStatusCodes400.BAD_REQUEST,
+        "Turno no encontrado"
+      );
+    }
+
+    // Registramos una solicitud de pago de multas
+    await registrarSolicitudesDePagoPorMulta(id_turno);
+
+    defaultProgramarFinDeTiempoDePagosMultas(
+      sumarSegundosAFecha(fechaHoraActual(), turno.tiempo_pago_multas_seg),
+      id_turno
+    );
   }
 };
 
-export const obtenerSolicitudesDePagoDeMultaDeJugador_Juego = async (
+export const solicitudesDePageMultaDeListaDeJugador_Juego = async (
   // id_jugador_juego: number,
   jugadores_juegos: Jugadores_Juegos[]
 ) => {
@@ -245,7 +303,7 @@ const obtenerSolicitudesDePagosDeMultasSinPagar = async (id_turno: number) => {
     );
   }
 
-  const solicitudes = await obtenerSolicitudesDePagoDeMultaDeJugador_Juego(
+  const solicitudes = await solicitudesDePageMultaDeListaDeJugador_Juego(
     jugadores_juegos
   );
 
@@ -309,6 +367,19 @@ const expulsarJugadorPorNoPagarMulta = async (id_jugador_juego: number) => {
   return jugador_expulsado;
 };
 
+const finalizarPorFaltaDePago = async (id_turno: number) => {
+  const turno = await prisma.turnos.update({
+    where: {
+      id: id_turno,
+    },
+    data: {
+      estado_turno: "Finalizado",
+    },
+  });
+
+  await actualizarJuego(turno.id_juego, { estado_juego: "Finalizado" });
+};
+
 export const finDePagoMultas = async (id_turno: number) => {
   // TODO: Realizar el proceso de fin de tiempo de multas
   /**
@@ -336,11 +407,22 @@ export const finDePagoMultas = async (id_turno: number) => {
    */
 
   // Establecemos una bandera que indica si el juego se debe programar en true
-  let programar_juego = true;
+  // let programar_nuevo_turno = true;
 
   // Verificamos si todos han pagado sus multas
   const solicitudesDePagoMultaSinPagar =
     await obtenerSolicitudesDePagosDeMultasSinPagar(id_turno);
+
+  const participantes = await obtenerJugadores_JuegosDeUnJuego(id_turno);
+
+  if (solicitudesDePagoMultaSinPagar.length + 1 === participantes.length) {
+    // Nadie pagó sus multas, el juego finaliza
+    console.log("NADIE PAGÓ SUS MULTAS, EL JUEGO FINALIZA");
+    await finalizarPorFaltaDePago(id_turno);
+    return;
+  }
+
+  console.log({ SOLICITUDES_SIN_PAGAR: solicitudesDePagoMultaSinPagar });
 
   // Obtenemos datos del turno
   const turno = await obtenerTurnoPorId(id_turno);
@@ -364,8 +446,19 @@ export const finDePagoMultas = async (id_turno: number) => {
 
   // Si no hay multas sin pagar
   if (solicitudesDePagoMultaSinPagar.length === 0) {
+    console.log("NO HAY MULTAS SIN PAGAR, PROGRAMAMOS EL SIGUIENTE TURNO");
     // Se notifica a los usuarios que el turno finalizó, que todos los jugadores pagaron sus cuotas correctamente y se inicia un nuevo turno
     // Corrección, solo se iniciará un nuevo turno sin notificar a los usuarios debido a que sería redundante
+
+    // Actualizamos el turno a Finalizado
+    const turno = await prisma.turnos.update({
+      where: {
+        id: id_turno,
+      },
+      data: {
+        estado_turno: "Finalizado",
+      },
+    });
 
     // Programamos el inicio del siguiente turno
     programarInicioDeUnNuevoTurno(
@@ -378,101 +471,115 @@ export const finDePagoMultas = async (id_turno: number) => {
     );
   } else {
     // No pagaron, obtenemos una lista de jugadores_juegos_no_pagaron que no pagaron sus multas y luego RECORREMOS a TODOS los participantes del juego
+    console.log("HAY MULTAS SIN PAGAR, PROCESAMOS LOS JUGADORES");
     const jugadores_juegos_no_pagaron =
       await obtenerJugadores_JuegosDeUnaListaDeSolicitudesDePago(
         solicitudesDePagoMultaSinPagar
       );
 
-    const jugadores_juegos = await obtenerJugadores_JuegosDeUnJuego(
-      turno.id_juego
-    );
+    console.log({ jugadores_juegos_no_pagaron });
 
-    if (jugadores_juegos.length === 0) {
-      throw new HttpException(
-        HttpStatusCodes400.BAD_REQUEST,
-        "No se encontraron jugadores en el juego"
+    // Recorremos únicamente los jugadores_juegos que no pagaron
+    for (const key in jugadores_juegos_no_pagaron) {
+      const jugador_juego_no_pago = jugadores_juegos_no_pagaron[key];
+
+      console.log({ jugador_juego_no_pago });
+
+      const jugador_no_pago = await obtenerJugador(
+        jugador_juego_no_pago.id_jugador
       );
-    }
 
-    //Recorremos todos los participantes del juego
-    for (const key in jugadores_juegos) {
-      const jugador_juego = jugadores_juegos[key];
+      if (!jugador_no_pago) {
+        throw new HttpException(
+          HttpStatusCodes400.BAD_REQUEST,
+          "Jugador no encontrado"
+        );
+      }
 
-      const noHaPagado = jugadores_juegos_no_pagaron.find(
-        (jugador_juego_no_pago) => jugador_juego_no_pago.id === jugador_juego.id
-      );
-      // Si el jugador_juego que se está analizando NO ha pagado su multa
-      if (noHaPagado) {
-        // Si el jugador_juego que se está analizando ES el creador y está remplazando a otro jugador que ya lo expulsaron
+      if (
+        (jugador_juego_no_pago.estado === "RemplazandoExpulsado" ||
+          jugador_juego_no_pago.rol === "Creador") &&
+        jugador_no_pago.client_token !== ""
+      ) {
+        // Obtenemos el jugador para enviar la notificación
 
-        if (jugador_juego.estado === "RemplazandoExpulsado") {
-          // El creador del juego está remplazando a otro jugador que ya fue expulsado y de manera obligatoria debe pagar, por lo que se notifica al creador que el juego no se reanudará hasta que pague.
-
-          // Obtenemos el jugador para enviar la notificación
-          const jugador = await obtenerJugador(jugador_juego.id_jugador);
-          if (!jugador) {
-            throw new HttpException(
-              HttpStatusCodes400.BAD_REQUEST,
-              "Jugador no encontrado"
-            );
-          }
-
-          // Obtenemos el jugador_expulsado para enviar la notificación
-          const jugador_expulsado =
-            await obtenerJugadorExpulsadoDesdeJugador_Juego(jugador_juego.id);
-
-          if (!jugador_expulsado) {
-            throw new HttpException(
-              HttpStatusCodes400.BAD_REQUEST,
-              "Jugador expulsado no encontrado"
-            );
-          }
-
-          const message = defaultNotificarCreadorRemplazanteNoHaPagadoMulta(
-            jugador_juego.id,
-            jugador.client_token,
-            jugador_expulsado.nombre,
-            juego.nombre
+        // Obtenemos el jugador_expulsado para enviar la notificación
+        const jugador_expulsado =
+          await obtenerJugadorExpulsadoDesdeJugador_Juego(
+            jugador_juego_no_pago.id
           );
 
+        if (!jugador_expulsado) {
+          throw new HttpException(
+            HttpStatusCodes400.BAD_REQUEST,
+            "Jugador expulsado no encontrado"
+          );
+        }
+
+        if (jugador_no_pago.client_token !== "") {
+          let message;
+          if (jugador_juego_no_pago.rol === "Creador") {
+            message = defaultNotificarCreadorNoHaPagadoMulta(
+              jugador_juego_no_pago.id,
+              jugador_no_pago.client_token,
+              juego.nombre
+            );
+          } else {
+            message = defaultNotificarCreadorRemplazanteNoHaPagadoMulta(
+              jugador_juego_no_pago.id,
+              jugador_no_pago.client_token,
+              jugador_expulsado.nombre,
+              juego.nombre
+            );
+          }
           sendFcmMessage(message);
+        }
 
-          // Se establece la bandera indicando que el juego se debe programar en false
-          programar_juego = false;
-        } else {
-          // El jugador_juego que se está analizando NO es el creador
-          // Expulsamos al jugador por no pagar la multa
-          const jugador_expulsado = await expulsarJugadorPorNoPagarMulta(
-            jugador_juego.id
+        // Se establece la bandera indicando que el juego se debe programar en false
+        // programar_nuevo_turno = false;
+      } else {
+        // El jugador_juego que se está analizando NO es el creador
+        // Expulsamos al jugador por no pagar la multa
+        const jugador_expulsado = await expulsarJugadorPorNoPagarMulta(
+          jugador_juego_no_pago.id
+        );
+
+        console.log({ jugador_expulsado });
+
+        if (!jugador_expulsado) {
+          throw new HttpException(
+            HttpStatusCodes400.BAD_REQUEST,
+            "Jugador expulsado no encontrado"
           );
+        }
 
-          if (!jugador_expulsado) {
-            throw new HttpException(
-              HttpStatusCodes400.BAD_REQUEST,
-              "Jugador expulsado no encontrado"
-            );
-          }
-
+        // Notificamos al jugador que ha sido expulsado por no cumplir con los pagos si tiene token
+        if (jugador_expulsado.client_token !== "") {
           const messageJugadorExpulsado = defaultNotificarJugadorExpulsado(
             jugador_expulsado.id,
             juego.id,
             juego.nombre,
             jugador_expulsado.client_token
           );
+          require("util").inspect.defaultOptions.depth = null;
+          console.log({ messageJugadorExpulsado });
 
           sendFcmMessage(messageJugadorExpulsado);
+        }
 
-          const jugador_creador = await obtenerCreadorDeJuego(
-            jugador_juego.id_juego
+        const jugador_creador = await obtenerCreadorDeJuego(
+          jugador_juego_no_pago.id_juego
+        );
+
+        if (!jugador_creador) {
+          throw new HttpException(
+            HttpStatusCodes400.BAD_REQUEST,
+            "Creador no encontrado"
           );
+        }
 
-          if (!jugador_creador) {
-            throw new HttpException(
-              HttpStatusCodes400.BAD_REQUEST,
-              "Creador no encontrado"
-            );
-          }
-
+        // Notificamos al creador del juego que el jugador ha sido expulsado y que ingresará en su cuenta
+        if (jugador_creador.client_token !== "") {
           const messageCreadorVaAReemplazar =
             defaultNotificarCreadorVaAReemplazar(
               jugador_creador.id,
@@ -481,25 +588,27 @@ export const finDePagoMultas = async (id_turno: number) => {
               juego.nombre,
               jugador_creador.client_token
             );
+
+          require("util").inspect.defaultOptions.depth = null;
+          console.log({ messageCreadorVaAReemplazar });
+          sendFcmMessage(messageCreadorVaAReemplazar);
         }
-      } else {
-        // El jugador_juego que se está analizando es un jugador que ha pagado, o no tiene una solicitud de pago de multa porque realizó el pago de su turno a tiempo
       }
     }
   }
 
   // Validamos el estado de la bandera preguntando si el juego se debe programar
-  if (programar_juego) {
-    // Se debe programar, entonces se programa el inicio del siguiente turno para unos segundos después.
-    programarInicioDeUnNuevoTurno(
-      sumarSegundosAFecha(fechaHoraActual(), 10),
-      juego.id,
-      turno.tiempo_puja_seg,
-      turno.tiempo_puja_seg + 15,
-      turno.tiempo_pago_seg,
-      turno.tiempo_pago_multas_seg
-    );
-  }
+  // if (programar_nuevo_turno) {
+  //   // Se debe programar, entonces se programa el inicio del siguiente turno para unos segundos después.
+  //   programarInicioDeUnNuevoTurno(
+  //     sumarSegundosAFecha(fechaHoraActual(), 15),
+  //     juego.id,
+  //     turno.tiempo_puja_seg,
+  //     turno.tiempo_puja_seg + 15,
+  //     turno.tiempo_pago_seg,
+  //     turno.tiempo_pago_multas_seg
+  //   );
+  // }
 };
 
 // obtenerSolicitudesDePagosDeMultasSinPagar(1);

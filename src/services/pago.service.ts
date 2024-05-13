@@ -4,6 +4,7 @@ import { HttpException } from "../exceptions";
 import { HttpStatusCodes400, defaultNotificarPagoAGanador } from "../utils";
 import { obtenerTurnoPorId } from "./turno.service";
 import { sendFcmMessage } from "./notificacion.service";
+
 export const obtenerPagosTurnos = async (id_turno: number) => {
   const pagos_turnos = await prisma.pagos.findMany({
     where: {
@@ -147,13 +148,29 @@ export const crearPagos_Turnos = async (
   return pago_turno;
 };
 
-export const obtenerSolicitudesDePagoDeJugador_Juego = async (
+export const obtenerSolicitudesDePagoDeTurnoDeJugador_Juego = async (
   id_jugador_juego: number
 ) => {
   const pagos = await prisma.pagos.findMany({
     where: {
       id_jugador_juego,
       tipo_pago: "Turno",
+      pagos_turnos: {
+        none: {},
+      },
+    },
+  });
+
+  return pagos;
+};
+
+export const obtenerSolicitudesDePagoDeMultaDeJugador_Juego = async (
+  id_jugador_juego: number
+) => {
+  const pagos = await prisma.pagos.findMany({
+    where: {
+      id_jugador_juego,
+      tipo_pago: "Multa",
       pagos_turnos: {
         none: {},
       },
@@ -233,27 +250,30 @@ export const validarQueTodosLosJugadores_JuegosHayanPagadoElTurno = async (
     );
   }
 
-  const jugadores_juegos = await prisma.jugadores_Juegos.findMany({
-    where: {
-      NOT: {
-        id: jugador_juego_ganador.id,
-      },
-      juego: {
-        turnos: {
-          some: {
-            id: id_turno,
+  // Obtenemos todos los jugadores_juegos que no sean el ganador del turno
+  const jugadores_juegos_sin_el_ganador =
+    await prisma.jugadores_Juegos.findMany({
+      where: {
+        NOT: {
+          id: jugador_juego_ganador.id,
+        },
+        juego: {
+          turnos: {
+            some: {
+              id: id_turno,
+            },
           },
         },
       },
-    },
-  });
+    });
 
   // Validamos que todos los jugadores_juegos hayan pagado el turno
-  for (const key in jugadores_juegos) {
-    const jugador_juego = jugadores_juegos[key];
+  for (const key in jugadores_juegos_sin_el_ganador) {
+    const jugador_juego_no_es_el_ganador = jugadores_juegos_sin_el_ganador[key];
 
+    // Obtenemos todos los pagos
     const pagos = await obtenerPago_TurnosDeJugador_JuegoEnTurno(
-      jugador_juego.id,
+      jugador_juego_no_es_el_ganador.id,
       id_turno
     );
 
@@ -263,4 +283,73 @@ export const validarQueTodosLosJugadores_JuegosHayanPagadoElTurno = async (
   }
 
   return true;
+};
+
+export const obtenerJugadores_JuegosQueNoHanPagadoElTurno = async (
+  id_turno: number
+) => {
+  const turno = await obtenerTurnoPorId(id_turno);
+
+  if (!turno) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Turno no encontrado"
+    );
+  }
+
+  if (turno.id_ganador_jugador_juego === null) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "El turno no tiene un ganador asignado"
+    );
+  }
+
+  const jugador_juego_ganador = await prisma.jugadores_Juegos.findUnique({
+    where: {
+      id: turno.id_ganador_jugador_juego,
+    },
+  });
+
+  if (!jugador_juego_ganador) {
+    throw new HttpException(
+      HttpStatusCodes400.BAD_REQUEST,
+      "Jugador_Juego ganador no encontrado"
+    );
+  }
+
+  // Obtenemos todos los jugadores_juegos que no sean el ganador del turno
+  const jugadores_juegos_sin_el_ganador =
+    await prisma.jugadores_Juegos.findMany({
+      where: {
+        NOT: {
+          id: jugador_juego_ganador.id,
+        },
+        juego: {
+          turnos: {
+            some: {
+              id: id_turno,
+            },
+          },
+        },
+      },
+    });
+
+  // Validamos que todos los jugadores_juegos hayan pagado el turno
+  const jugadores_juegos_sin_pagar = [];
+  for (const key in jugadores_juegos_sin_el_ganador) {
+    const jugador_juego_no_es_el_ganador = jugadores_juegos_sin_el_ganador[key];
+
+    // Obtenemos todos los pagos
+    const pagos = await obtenerPago_TurnosDeJugador_JuegoEnTurno(
+      jugador_juego_no_es_el_ganador.id,
+      id_turno
+    );
+
+    // Si no hay pagos, entonces el jugador_juego no ha pagado
+    if (pagos.length === 0) {
+      jugadores_juegos_sin_pagar.push(jugador_juego_no_es_el_ganador);
+    }
+  }
+
+  return jugadores_juegos_sin_pagar;
 };

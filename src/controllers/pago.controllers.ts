@@ -5,7 +5,7 @@ import {
   obtenerPago_TurnosDeJugador_JuegoEnTurno,
   obtenerPagosRealizadosPorJugador_JuegoEnUnJuegoPorConceptoTurno,
   obtenerPagosTurnos,
-  obtenerSolicitudesDePagoDeJugador_Juego,
+  obtenerSolicitudesDePagoDeTurnoDeJugador_Juego,
 } from "../services";
 import { HttpStatusCodes200, response } from "../utils";
 
@@ -53,7 +53,7 @@ const obtenerSolicitudesDePagoDesdeUnJugador_Juego = async (
 ) => {
   const { id_jugador_juego } = req.params;
 
-  const pagos = await obtenerSolicitudesDePagoDeJugador_Juego(
+  const pagos = await obtenerSolicitudesDePagoDeTurnoDeJugador_Juego(
     parseInt(id_jugador_juego)
   );
 

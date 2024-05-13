@@ -412,7 +412,7 @@ export const actualizarTokenFireBase = async (
   id_jugador: number,
   client_token: string
 ) => {
-  const jugador = prisma.jugadores.update({
+  const jugador = await prisma.jugadores.update({
     where: {
       id: id_jugador,
     },

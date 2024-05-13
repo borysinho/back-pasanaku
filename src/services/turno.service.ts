@@ -26,7 +26,7 @@ export const crearTurno = async (
   payLoad: Prisma.TurnosCreateInput
 ) => {
   // const data: Prisma.TurnosCreateInput = { ...payLoad };
-  const turno = prisma.turnos.create({
+  const turno = await prisma.turnos.create({
     data: payLoad,
   });
 
@@ -34,7 +34,7 @@ export const crearTurno = async (
 };
 
 export const obtenerPujas = async () => {
-  const pujas = prisma.pujas.findMany({});
+  const pujas = await prisma.pujas.findMany({});
 
   return pujas;
 };
@@ -46,7 +46,7 @@ export const eliminarTurnosDeJuego = async (id_juego: number) => {
     },
   });
 
-  const juegos = prisma.juegos.updateMany({
+  const juegos = await prisma.juegos.updateMany({
     data: {
       monto_total: 9000,
     },
@@ -431,7 +431,7 @@ Detalles: ${turnosQueNoHanFinalizado.toString()}`
         // El juego NO ha finalizado, pero ya no se pueden crear más turnos
         if (turnosDeJuego.length === juego.cant_jugadores) {
           // Actyalizamos el juego a finalizado
-          const turnoFinDeJuego = prisma.juegos.update({
+          const turnoFinDeJuego = await prisma.juegos.update({
             where: {
               id: id_juego,
             },

@@ -42,7 +42,7 @@ export const actualizarJuego = async (
   id_juego: number,
   data: Prisma.JuegosUpdateInput
 ) => {
-  const juego = prisma.juegos.update({
+  const juego = await prisma.juegos.update({
     where: {
       id: id_juego,
     },

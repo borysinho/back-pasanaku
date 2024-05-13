@@ -431,7 +431,7 @@ const actualizarEstadosCorreo = async (
   data: Prisma.Invitados_JuegosUpdateInput
 ) => {
   console.log({ correos });
-  const invitados_juegos = prisma.invitados_Juegos.updateMany({
+  const invitados_juegos = await prisma.invitados_Juegos.updateMany({
     where: {
       id_juego,
       invitado: {
@@ -783,7 +783,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
         });
 
         if (jugadorEnBucle !== null) {
-          // Registramos la solicitud de pago solo si el jugador en bucle no es el ganador del turno
+          // Registramos la solicitud de pago solo si el jugador en bucle NO es el ganador del turno
           if (jugadorJuegoEnBucle.id !== jugador_juego_ganador.id) {
             await registrarSolicitudDePago(
               jugadorJuegoEnBucle.id,
@@ -794,15 +794,17 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
               jugador_ganador.nombre
             );
           } else {
-            // Si el jugador en bucle es el ganador del turno, entonces cambiamos el estado del turno a "TiempoEsperandoQR"
-            const turno_actualizado = await prisma.turnos.update({
-              where: {
-                id: id_turno,
-              },
-              data: {
-                estado_turno: "TiempoEsperandoQR",
-              },
-            });
+            // Si el jugador en bucle es el ganador del turno y además no ha subido su QR,  entonces cambiamos el estado del turno a "TiempoEsperandoQR"
+            if (jugadorEnBucle.qr === "") {
+              await prisma.turnos.update({
+                where: {
+                  id: id_turno,
+                },
+                data: {
+                  estado_turno: "TiempoEsperandoQR",
+                },
+              });
+            }
           }
 
           // Empezamos a notificar solo a los que tienen token
@@ -835,7 +837,7 @@ export const notificarGanadorDeTurno = async (id_juego: number) => {
             }
 
             require("util").inspect.defaultOptions.depth = null;
-            // console.log({ EnviandoNotificacion: message });
+            // console.log({ NotificacionGanadorTurno: message });
             sendFcmMessage(message);
           }
         }
@@ -886,10 +888,10 @@ export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
    * 3. Obtenemos un listado de todos los jugadores que participan en el juego (jugadores_juegos)
    * 4. Recorremos cada uno de los jugadores_juegos y notificamos (en caso que tengan un token de Firebase) a cada uno de ellos que el proceso de pagos ha iniciado
    */
+  // TODO Aquí tengo que enviar los mensajes
 
   // Obtenemos el turno
   const turno = await prisma.turnos.update({
-    // TODO Aquí tengo que enviar los mensajes
     where: {
       id: id_turno,
     },
@@ -899,7 +901,7 @@ export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
   });
 
   // Obtenemos el juego
-  if (turno) {
+  if (turno !== null) {
     // Obtenemos el juego
     const juego = await obtenerJuego(turno.id_juego);
     if (!juego) {
@@ -917,14 +919,18 @@ export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
       );
     }
     // Recorremos cada uno de los jugadores_juegos y notificamos a cada uno de ellos que el proceso de pagos ha iniciado
-    let message: Object = {};
-    jugadores_juegos.forEach(async (jugador_juego) => {
+    for (const key in jugadores_juegos) {
+      let message: Object = {};
+      const jugador_juego = jugadores_juegos[key];
+
       const jugador = await obtenerJugador(jugador_juego.id_jugador);
+      // console.log({ jugador });
       if (
         jugador &&
         jugador.client_token !== "" &&
         jugador_juego.id !== turno.id_ganador_jugador_juego
       ) {
+        // El jugador no es el ganador del turno
         message = defaultInicioDePagos(
           jugador_juego.id,
           jugador.id,
@@ -934,7 +940,9 @@ export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
           juego.moneda,
           jugador.client_token
         );
+        console.log({ MensajePARTICIPANTE: message });
       } else {
+        // El jugador es el ganador del turno
         if (
           jugador &&
           jugador.client_token !== "" &&
@@ -946,22 +954,27 @@ export const notificarInicioDePagosDeTurnos = async (id_turno: number) => {
             juego.nombre,
             jugador.client_token
           );
+          console.log({ MensajeGANADOR: message });
         } else {
           // No hacer nada
         }
       }
+
       if (Object.keys(message).length !== 0) {
         require("util").inspect.defaultOptions.depth = null;
-        // console.log({ message });
+        console.log({ MENSAJENOTIFICACION: message });
         sendFcmMessage(message);
+        console.log("SE HA ENVIADO LA NOTIFICACIÓN");
       }
-    });
+    }
 
     // Programamos el fin del tiempo de pagos
     programarFinDeTiempoDePagos(
       sumarSegundosAFecha(turno.fecha_inicio_pago, turno.tiempo_pago_seg),
       turno.id
     );
+
+    console.log("ESTO ES LO ÚLTIMO QUE SE MUESTRA");
 
     return { turno };
   } else {
@@ -1009,9 +1022,12 @@ export const notificarFinDePagosDeTurnos = async (id_turno: number) => {
       );
     }
     // Recorremos cada uno de los jugadores_juegos y notificamos a cada uno de ellos que el proceso de pagos ha finalizado
-    let message: Object = {};
-    jugadores_juegos.forEach(async (jugador_juego) => {
+    // jugadores_juegos.forEach(async (jugador_juego) => {
+    for (const key in jugadores_juegos) {
+      let message: Object = {};
+      const jugador_juego = jugadores_juegos[key];
       const jugador = await obtenerJugador(jugador_juego.id_jugador);
+
       if (jugador && jugador.client_token !== "") {
         message = defaultFinDeTiempoDePagos(
           jugador_juego.id,
@@ -1025,7 +1041,7 @@ export const notificarFinDePagosDeTurnos = async (id_turno: number) => {
         // console.log({ message });
         sendFcmMessage(message);
       }
-    });
+    }
 
     const turno_actualizado = await prisma.turnos.update({
       where: {

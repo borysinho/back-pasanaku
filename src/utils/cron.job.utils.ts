@@ -63,7 +63,7 @@ export const programarNotificarInicioDePagos = (
     );
     cron.schedule(expr, async function () {
       console.log(
-        `Enviado notificaciones sobre el inicio de Pagos para el Turno id:${id_turno}.`
+        `Envinado notificaciones sobre el inicio de Pagos para el Turno id:${id_turno}.`
       );
       await notificarInicioDePagosDeTurnos(id_turno);
       console.log(
@@ -123,7 +123,7 @@ export const programarInicioDeTiempoDePagoDeMultas = (
     );
     cron.schedule(expr, async function () {
       console.log(`Inicio de Pagos de Multas para el turno ${id_turno}.`);
-      await inicioDePagoDeMultas(id_turno);
+      inicioDePagoDeMultas(id_turno);
       console.log("Proceso de inicio de Pagos terminado.");
     });
     return { error: false, data: "Notificaciones programadas correctamente" };
