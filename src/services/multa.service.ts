@@ -4,7 +4,6 @@ import {
   defaultNotificarCreadorRemplazanteNoHaPagadoMulta,
   defaultNotificarCreadorVaAReemplazar,
   defaultNotificarJugadorExpulsado,
-  defaultNotificarTodosLosPagosTurnosCompletados,
   defaultProgramarFinDeTiempoDePagosMultas,
   fechaHoraActual,
   programarInicioDeUnNuevoTurno,
@@ -24,7 +23,6 @@ import {
 } from "./notificacion.service";
 import {
   obtenerJugadores_JuegosQueNoHanPagadoElTurno,
-  // obtenerSolicitudesDePagoDeTurnoDeJugador_Juego,
   validarQueTodosLosJugadores_JuegosHayanPagadoElTurno,
 } from "./pago.service";
 import prisma from "./prisma.service";
@@ -263,7 +261,7 @@ export const inicioDePagoDeMultas = async (id_turno: number) => {
   }
 };
 
-export const solicitudesDePageMultaDeListaDeJugador_Juego = async (
+export const solicitudesDePogoMultaDeListaDeJugador_Juego = async (
   // id_jugador_juego: number,
   jugadores_juegos: Jugadores_Juegos[]
 ) => {
@@ -272,6 +270,22 @@ export const solicitudesDePageMultaDeListaDeJugador_Juego = async (
       id_jugador_juego: {
         in: jugadores_juegos.map((jugador_juego) => jugador_juego.id),
       },
+      tipo_pago: "Multa",
+      pagos_turnos: {
+        none: {},
+      },
+    },
+  });
+
+  return pagos;
+};
+
+export const srvSolicitudesDePagoMultaSinPagarDeJugador_Juego = async (
+  id_jugador_juego: number
+) => {
+  const pagos = await prisma.pagos.findMany({
+    where: {
+      id_jugador_juego,
       tipo_pago: "Multa",
       pagos_turnos: {
         none: {},
@@ -303,7 +317,7 @@ const obtenerSolicitudesDePagosDeMultasSinPagar = async (id_turno: number) => {
     );
   }
 
-  const solicitudes = await solicitudesDePageMultaDeListaDeJugador_Juego(
+  const solicitudes = await solicitudesDePogoMultaDeListaDeJugador_Juego(
     jugadores_juegos
   );
 

@@ -24,6 +24,12 @@ class MultasRoutes {
       multasController.ctrlGetPagosMultasById
     );
 
+    // Obtenemos todas las solicitudes de pago de multa sin pagar de un jugador_juego en un juego
+    this.router.get(
+      "/jugadores_juegos/:id_jugador_juego/solicitudpagomulta",
+      multasController.ctrlGetSolicitudesDePagoMultaSinPagarDeJugador_Juego
+    );
+
     // Registramos un pagoTurno a partir de una solicitud de pago de multa en un turno
     this.router.post(
       "/jugadores_juegos/solicitudpagomulta/:id_solicitud_pago_multa/pagos/turnos/:id_turno/juegos",

@@ -9,6 +9,7 @@ import {
   srvDeletePagosMultas,
   srvGetPagosMultas,
   srvGetPagosMultasById,
+  srvSolicitudesDePagoMultaSinPagarDeJugador_Juego,
   srvUpdatePagosMultas,
 } from "../services/multa.service";
 
@@ -76,10 +77,22 @@ const ctrlDeletePagosMultas = catchedAsync(
   }
 );
 
+const ctrlGetSolicitudesDePagoMultaSinPagarDeJugador_Juego = catchedAsync(
+  async (req: Request, res: Response) => {
+    const { id_jugador_juego } = req.params;
+    const multas = await srvSolicitudesDePagoMultaSinPagarDeJugador_Juego(
+      parseInt(id_jugador_juego)
+    );
+
+    response(res, HttpStatusCodes200.OK, multas);
+  }
+);
+
 export default {
   ctrlGetPagosMultas,
   ctrlGetPagosMultasById,
   ctrlCreatePagosMultas,
   ctrlUpdatePagosMultas,
   ctrlDeletePagosMultas,
+  ctrlGetSolicitudesDePagoMultaSinPagarDeJugador_Juego,
 };
